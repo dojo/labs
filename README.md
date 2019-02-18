@@ -4,6 +4,8 @@ Early access to future and experimental Dojo features. You can expect to find id
 
 The goal of the features from `@dojo/labs` is to be promoted into the main Dojo framework....!
 
+**Not intended for use in production applications. The feature APIs may break from release to release and even disappear. Please be aware**
+
 ## Rules of Engagement
 
 `@dojo/labs` is designed to be a playground to test out and provide early access to upcoming features/ideas from Dojo core team and the community. However there are still standards and rules that will need to met.
