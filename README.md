@@ -27,3 +27,5 @@ Each package will need to implement the following `npm scripts`:
    * Build the package ready for distribution
 
 The built files for publishing needs to be outputted to `dist/release` directory.
+
+Alternatively, the `package-template` package can be copied and renamed for the new feature.

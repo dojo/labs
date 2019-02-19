@@ -1,8 +1,8 @@
 {
-	"name": "@dojo-labs/test",
+	"name": "@dojo-labs/package-template",
 	"version": "0.0.1",
 	"description": "",
-	"main": "index.js",
+	"main": "main.js",
 	"scripts": {
 		"build:esm": "tsc -p tsconfig.esm.json",
 		"build:static:dev": "cpx \"{src,tests}/**/*.{html,png,jpg,gif,json,xml,css,txt,d.ts}\" dist/dev",
