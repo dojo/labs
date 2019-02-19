@@ -29,3 +29,11 @@ Each package will need to implement the following `npm scripts`:
 The built files for publishing needs to be outputted to `dist/release` directory.
 
 Alternatively, the `package-template` package can be copied and renamed for the new feature.
+
+## Releasing @dojo/labs
+
+@dojo/labs uses lerna to for to manage building and releasing each of the sub projects. To run a release of all features that have been updated since the last release run `npm run release`.
+
+## Licensing information
+
+© 2019 [JS Foundation](https://js.foundation/) & contributors. [New BSD](http://opensource.org/licenses/BSD-3-Clause) license.
