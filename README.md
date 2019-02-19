@@ -17,7 +17,7 @@ The goal of the features from `@dojo/labs` is to be promoted into the main Dojo 
 
 `@dojo/labs` is a mono-repo, meaning that each feature will be released under the `@dojo-labs` scope with the name specified in the `package.json`.
 
-To add a new package to `@dojo/labs`, create a directory in the `packages` directory and add code away!
+To add a new package to `@dojo/labs`, run `npm run create new-package-name` with the new package name from the root of `@dojo/labs`.
 
 Each package will need to implement the following `npm scripts`:
 
@@ -25,3 +25,5 @@ Each package will need to implement the following `npm scripts`:
    * Run all tests for the package.
 * `build`
    * Build the package ready for distribution
+
+The built files for publishing needs to be outputted to `dist/release` directory.
