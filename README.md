@@ -8,10 +8,10 @@ The goal of the features from `@dojo/labs` is to be promoted into the main Dojo 
 
 ## Rules of Engagement
 
-`@dojo/labs` is designed to be a playground to test out and provide early access to upcoming features/ideas from Dojo core team and the community. However there are still standards and rules that will need to met.
+`@dojo/labs` is designed to be a playground to test out and provide early access to upcoming features/ideas from the Dojo core team and the Dojo community. However there are still standards and rules that will need to met.
 
 1) All features need to be fully tested and documented.
-1) Features will have approximately 6 months (two major Dojo releases) to be promoted, after which they will be removed from labs repository.
+1) Features will have approximately 6 months (two major Dojo releases) to be promoted, after which they will be removed from the labs repository.
 
 ## Adding a new labs feature
 
@@ -26,13 +26,13 @@ Each package will need to implement the following `npm scripts`:
 * `build`
    * Build the package ready for distribution
 
-The built files for publishing needs to be outputted to `dist/release` directory.
+The built files for publishing must get output to `dist/release` directory.
 
 Alternatively, the `package-template` package can be copied and renamed for the new feature.
 
 ## Releasing @dojo/labs
 
-@dojo/labs uses lerna to for to manage building and releasing each of the sub projects. To run a release of all features that have been updated since the last release run `npm run release`.
+@dojo/labs uses [lerna](https://github.com/lerna/lerna/) to manage building and releasing each of the sub projects. To run a release of all features that have been updated since the last release run `npm run release`.
 
 ## Licensing information
 
