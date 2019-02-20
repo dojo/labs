@@ -2,6 +2,7 @@
 	"name": "root",
 	"private": true,
 	"scripts": {
+		"build": "lerna run build",
 		"release": "lerna run build && lerna publish --contents dist/release",
 		"prettier": "prettier --write \"packages/**/src/**/*.ts\" \"packages/**/tests/**/*.ts\"",
 		"create": "lerna create"
