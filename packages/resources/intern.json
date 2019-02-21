@@ -1,0 +1,24 @@
+{
+	"extends": "./node_modules/@dojo/scripts/intern/base.json",
+
+	"capabilities+": {
+		"name": "@dojo-labs/resources",
+		"browserstack.debug": false
+	},
+
+	"environments": [
+		{ "browserName": "node" }
+	],
+
+	"browser": {
+		"loader": {
+			"script": "./node_modules/@dojo/scripts/intern/loader.js",
+			"options": {
+				"packages": [
+					{ "name": "src", "location": "dist/dev/src" },
+					{ "name": "tests", "location": "dist/dev/tests" }
+				]
+			}
+		}
+	}
+}
