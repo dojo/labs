@@ -4,14 +4,14 @@
 	"scripts": {
 		"build": "lerna run build",
 		"release": "lerna run build && lerna publish --contents dist/release",
-		"prettier": "prettier --write \"packages/**/src/**/*.ts\" \"packages/**/tests/**/*.ts\"",
+		"prettier": "prettier --write  \"packages/**/{src,tests}/**/*.{ts,tsx}\"",
 		"create": "lerna create"
 	},
 	"devDependencies": {
 		"husky": "~0.14.3",
-		"lerna": "^3.13.0",
+		"lerna": "3.13.0",
 		"lint-staged": "6.0.0",
-		"prettier": "^1.16.4",
+		"prettier": "1.16.4",
 		"typescript": "2.6.2"
 	},
 	"lint-staged": {
