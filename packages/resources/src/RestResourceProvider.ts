@@ -1,6 +1,11 @@
 import WidgetBase from '@dojo/framework/widget-core/WidgetBase';
 import { Constructor } from '@dojo/framework/widget-core/interfaces';
-import { createResourceProvider, ResourceProviderProperties, ResourceConfig, ResourceResponseStatus } from './ResourceProvider';
+import {
+	createResourceProvider,
+	ResourceProviderProperties,
+	ResourceConfig,
+	ResourceResponseStatus
+} from './ResourceProvider';
 
 export interface RestResourceUrlOptions {
 	origin: string;
