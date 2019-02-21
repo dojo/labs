@@ -1,11 +1,38 @@
-import { uuid } from '@dojo/framework/core/util';
+import { uuid } from './uuid';
 import WidgetBase from '@dojo/framework/widget-core/WidgetBase';
-import { ResourceConfig, Resource, ResourceState } from './interfaces';
+import { ResourceState } from './interfaces';
 import { createProcessFactoryWith } from '@dojo/framework/stores/process';
 import { beforeReadMany, readMany } from './commands';
 import { RenderResult, Constructor } from '@dojo/framework/widget-core/interfaces';
 import alwaysRender from '@dojo/framework/widget-core/decorators/alwaysRender';
 import Store from '@dojo/framework/stores/Store';
+
+export type Status = 'failed' | 'loading' | 'completed';
+export type Action = 'create' | 'remove' | 'update' | 'read';
+
+export enum ResourceResponseStatus {
+	failed = 0,
+	success = 1
+}
+
+export interface Resource<S> {
+	getOrRead(): S[];
+}
+
+export interface ManyResourceResponse<S> {
+	data: S[];
+	status: ResourceResponseStatus;
+}
+
+export interface ResourceRead<S> {
+	(): Promise<ManyResourceResponse<S>>;
+}
+
+export interface ResourceConfig<S> {
+	idKey?: string;
+	template(resource: Partial<S>): S;
+	read: ResourceRead<S>;
+}
 
 export interface ResourceProviderProperties<S> {
 	renderer(resource: Resource<S>): RenderResult;

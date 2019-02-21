@@ -1,9 +1,9 @@
-import { StatePaths, Path } from '@dojo/framework/stores/Store';
-import { ResourceState, ResourceConfig, ResourceResponseStatus } from './interfaces';
+import { ResourceState } from './interfaces';
 import { Command, createCommandFactory } from '@dojo/framework/stores/process';
 import { replace } from '@dojo/framework/stores/state/operations';
-import { uuid } from '@dojo/framework/core/util';
+import { uuid } from './uuid';
 import { PatchOperation } from '@dojo/framework/stores/state/Patch';
+import { ResourceConfig, ResourceResponseStatus } from './ResourceProvider';
 
 export interface ReadManyPayload {
 	pathPrefix: string;
@@ -14,15 +14,6 @@ export interface ReadManyPayload {
 }
 
 const createCommand = createCommandFactory<ResourceState<any>>();
-
-export function getSynthId(
-	get: <S>(path: Path<ResourceState<any>, S>) => S,
-	path: StatePaths<ResourceState<any>>,
-	pathPrefix: any,
-	id: string
-) {
-	return get(path(pathPrefix, 'idMap', id)) || id;
-}
 
 export const beforeReadMany: Command<ResourceState<any>, ReadManyPayload> = createCommand<ReadManyPayload>(
 	({ get, path, at, payload }) => {
@@ -50,8 +41,8 @@ export const readMany: Command<ResourceState<any>, ReadManyPayload> = createComm
 		result.data.forEach((item: any) => {
 			const syntheticId = uuid();
 			batchIds.push(syntheticId);
-			operations.push(replace(path(pathPrefix, 'data', syntheticId), template(item)));
 			operations.push(replace(path(pathPrefix, 'idMap', item[idKey]), syntheticId));
+			operations.push(replace(path(pathPrefix, 'data', syntheticId), template(item)));
 			operations.push(
 				replace(path(metaPath, 'items', syntheticId), { status: 'completed', action: 'read', log: {} })
 			);

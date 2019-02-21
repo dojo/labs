@@ -1,7 +1,34 @@
 import WidgetBase from '@dojo/framework/widget-core/WidgetBase';
-import { ResourceConfig, RestResource, RestManyResourceOperations, ResourceResponseStatus } from './interfaces';
 import { Constructor } from '@dojo/framework/widget-core/interfaces';
-import { createResourceProvider, ResourceProviderProperties } from './ResourceProvider';
+import { createResourceProvider, ResourceProviderProperties, ResourceConfig, ResourceResponseStatus } from './ResourceProvider';
+
+export interface RestResourceUrlOptions {
+	origin: string;
+	name: string;
+	id?: string;
+}
+
+export interface RestResourceUrlFunction {
+	(options: RestResourceUrlOptions): string;
+}
+
+export interface RestResourceOperationsConfig {
+	optimistic: boolean;
+	verb: 'GET' | 'POST' | 'PATCH' | 'DELETE' | 'PUT';
+	url: RestResourceUrlFunction;
+}
+
+export interface RestManyResourceOperations {
+	read: false | RestResourceOperationsConfig;
+}
+
+export interface RestResource<S> {
+	origin: string;
+	name: string;
+	idKey?: string;
+	template?(resource: Partial<S>): S;
+	many?: Partial<RestManyResourceOperations>;
+}
 
 const DEFAULT_REST_CONFIG: {
 	many: RestManyResourceOperations;
