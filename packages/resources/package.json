@@ -2,7 +2,6 @@
 	"name": "@dojo-labs/resources",
 	"version": "0.0.1",
 	"description": "",
-	"main": "main.js",
 	"scripts": {
 		"build:esm": "tsc -p tsconfig.esm.json",
 		"build:static:dev": "cpx \"{src,tests}/**/*.{html,png,jpg,gif,json,xml,css,txt,d.ts}\" dist/dev",
@@ -26,13 +25,17 @@
 	},
 	"author": "",
 	"license": "BSD-3-Clause",
-	"dependencies": {
-		"@dojo/framework": "^5.0.2"
+	"peerDependencies": {
+		"@dojo/framework": "^5.0.0"
 	},
 	"devDependencies": {
+		"@dojo/framework": "^5.0.0",
+		"@dojo/loader": "2.0.0",
 		"@dojo/scripts": "3.1.0",
+		"@types/sinon": "~4.1.2",
 		"cpx": "1.5.0",
 		"npm-run-all": "4.1.5",
+		"sinon": "~4.1.3",
 		"typescript": "2.6.2"
 	},
 	"publishConfig": {
