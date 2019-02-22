@@ -33,7 +33,11 @@ export const beforeReadMany: Command<ResourceState<any>, ReadManyPayload> = crea
 	}
 );
 
-function processReadMany(result: ManyResourceResponse<any>, payload: ReadManyPayload, path: StatePaths<ResourceState<any>>) {
+function processReadMany(
+	result: ManyResourceResponse<any>,
+	payload: ReadManyPayload,
+	path: StatePaths<ResourceState<any>>
+) {
 	const { idKey, config, pathPrefix, batchId } = payload;
 	const metaPath = path(pathPrefix, 'meta');
 	const { template } = config;
@@ -58,12 +62,14 @@ function processReadMany(result: ManyResourceResponse<any>, payload: ReadManyPay
 		...operations,
 		replace(path(metaPath, 'actions', 'read', 'many', 'status'), 'completed'),
 		replace(path(pathPrefix, 'order', batchId), batchIds)
-	]
+	];
 }
 
 export const readMany: Command<ResourceState<any>, ReadManyPayload> = createCommand<ReadManyPayload>(
 	({ path, payload }) => {
-		const { config: { read } } = payload;
+		const {
+			config: { read }
+		} = payload;
 		const result = read();
 
 		if (isThenable(result)) {
@@ -74,12 +80,10 @@ export const readMany: Command<ResourceState<any>, ReadManyPayload> = createComm
 	}
 );
 
-export const failedResource : Command<ResourceState<any>, FailedResourcePayload> = createCommand<FailedResourcePayload>(
+export const failedResource: Command<ResourceState<any>, FailedResourcePayload> = createCommand<FailedResourcePayload>(
 	({ path, payload }) => {
 		const { pathPrefix, type, action }: any = payload;
 		const metaPath = path(pathPrefix, 'meta');
-		return [
-			replace(path(metaPath, 'actions', action, type, 'status'), 'failed'),
-		];
+		return [replace(path(metaPath, 'actions', action, type, 'status'), 'failed')];
 	}
 );

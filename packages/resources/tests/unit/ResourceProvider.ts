@@ -10,7 +10,6 @@ let store: Store;
 let registry: any;
 
 describe('ResourceProvider', () => {
-
 	beforeEach(() => {
 		store = new Store();
 		registry = registerStoreInjector(store);
@@ -26,7 +25,7 @@ describe('ResourceProvider', () => {
 			},
 			read: () => {
 				readCallCount++;
-				return  { data: [ {id: 'a'}], status: ResourceResponseStatus.success };
+				return { data: [{ id: 'a' }], status: ResourceResponseStatus.success };
 			}
 		});
 
@@ -39,7 +38,7 @@ describe('ResourceProvider', () => {
 				if (renderCount === 1) {
 					assert.isEmpty(result);
 				} else {
-					assert.deepEqual(result, [ { id: 'a' } ]);
+					assert.deepEqual(result, [{ id: 'a' }]);
 				}
 				return null;
 			}
@@ -66,7 +65,7 @@ describe('ResourceProvider', () => {
 			},
 			read: () => {
 				readCallCount++;
-				return  { data: [ {id: 'a'}], status: ResourceResponseStatus.success };
+				return { data: [{ id: 'a' }], status: ResourceResponseStatus.success };
 			}
 		});
 
@@ -79,7 +78,7 @@ describe('ResourceProvider', () => {
 				if (renderCount === 1) {
 					assert.isEmpty(result);
 				} else {
-					assert.deepEqual(result, [ { id: 'a' } ]);
+					assert.deepEqual(result, [{ id: 'a' }]);
 				}
 				return null;
 			}
@@ -102,7 +101,7 @@ describe('ResourceProvider', () => {
 			},
 			read: () => {
 				readCallCount++;
-				return  { data: [ {id: 'a'}], status: ResourceResponseStatus.success };
+				return { data: [{ id: 'a' }], status: ResourceResponseStatus.success };
 			}
 		});
 
@@ -141,7 +140,7 @@ describe('ResourceProvider', () => {
 				return resource;
 			},
 			read: () => {
-				return  { data: [ {id: 'a'}], status: ResourceResponseStatus.success };
+				return { data: [{ id: 'a' }], status: ResourceResponseStatus.success };
 			}
 		});
 

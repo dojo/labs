@@ -38,9 +38,7 @@ export interface ResourceProviderProperties<S> {
 	renderer(resource: Resource<S>): RenderResult;
 }
 
-export function resourceProvider<S>(
-	config: ResourceConfig<S>
-): Constructor<WidgetBase<ResourceProviderProperties<S>>> {
+export function resourceProvider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<ResourceProviderProperties<S>>> {
 	const pathPrefix = uuid();
 	const { idKey = 'id' } = config;
 	const failedResourceProcess = createProcess(`${pathPrefix}-failed-resource`, [failedResource]);

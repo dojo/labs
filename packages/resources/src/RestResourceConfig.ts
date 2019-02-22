@@ -1,8 +1,5 @@
 import fetch from '@dojo/framework/shim/fetch';
-import {
-	ResourceConfig,
-	ResourceResponseStatus
-} from './ResourceProvider';
+import { ResourceConfig, ResourceResponseStatus } from './ResourceProvider';
 
 export interface RestResourceUrlOptions {
 	origin: string;
