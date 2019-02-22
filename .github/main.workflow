@@ -1,4 +1,4 @@
-workflow "New workflow" {
+workflow "Pull Request Build" {
   on = "pull_request"
   resolves = ["Test"]
 }
