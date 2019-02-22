@@ -6,16 +6,16 @@ import { Pointer } from '@dojo/framework/stores/state/Pointer';
 import { beforeReadMany, readMany } from '../../src/commands';
 import { ResourceResponseStatus } from '../../src/ResourceProvider';
 import { ReplacePatchOperation } from '@dojo/framework/stores/state/Patch';
+import { replace } from '@dojo/framework/stores/state/operations';
 
 const store = new Store();
+const metaPath = store.path('test', 'meta');
 
 describe('commands', () => {
 	it('beforeReadMany', () => {
 		const { at, path, get } = store;
 		const operations = beforeReadMany({ at, get, path, payload: { pathPrefix: 'test' } as any });
-		assert.deepEqual<any>(operations, [
-			{ op: 'replace', path: new Pointer('/test/meta/actions/read/many/status'), value: 'loading' }
-		]);
+		assert.deepEqual(operations, [replace(path(metaPath, 'actions', 'read', 'many', 'status'), 'loading')]);
 	});
 
 	it('readMany - no results', async () => {
@@ -34,9 +34,9 @@ describe('commands', () => {
 			type: 'type'
 		};
 		const operations = await readMany({ at, get, path, payload });
-		assert.deepEqual<any>(operations, [
-			{ op: 'replace', path: new Pointer('/test/meta/actions/read/many/status'), value: 'completed' },
-			{ op: 'replace', path: new Pointer('/test/order/batchId'), value: [] }
+		assert.deepEqual(operations, [
+			replace(path(metaPath, 'actions', 'read', 'many', 'status'), 'completed'),
+			replace(path('test', 'order', 'batchId'), [])
 		]);
 	});
 
@@ -59,31 +59,23 @@ describe('commands', () => {
 
 		const aSynthId = (operations[0] as ReplacePatchOperation).value;
 		const bSynthId = (operations[3] as ReplacePatchOperation).value;
-		assert.deepEqual<any>(operations, [
-			{ op: 'replace', path: new Pointer('/test/idMap/a'), value: aSynthId },
-			{ op: 'replace', path: new Pointer(`/test/data/${aSynthId}`), value: { id: 'a' } },
-			{
-				op: 'replace',
-				path: new Pointer(`/test/meta/items/${aSynthId}`),
-				value: {
-					status: 'completed',
-					action: 'read',
-					log: {}
-				}
-			},
-			{ op: 'replace', path: new Pointer('/test/idMap/b'), value: bSynthId },
-			{ op: 'replace', path: new Pointer(`/test/data/${bSynthId}`), value: { id: 'b' } },
-			{
-				op: 'replace',
-				path: new Pointer(`/test/meta/items/${bSynthId}`),
-				value: {
-					status: 'completed',
-					action: 'read',
-					log: {}
-				}
-			},
-			{ op: 'replace', path: new Pointer('/test/meta/actions/read/many/status'), value: 'completed' },
-			{ op: 'replace', path: new Pointer('/test/order/batch-Id'), value: [aSynthId, bSynthId] }
+		assert.deepEqual(operations, [
+			replace(path('test', 'idMap', 'a'), aSynthId),
+			replace(path('test', 'data', aSynthId), { id: 'a' }),
+			replace(path(metaPath, 'items', aSynthId), {
+				status: 'completed',
+				action: 'read',
+				log: {}
+			}),
+			replace(path('test', 'idMap', 'b'), bSynthId),
+			replace(path('test', 'data', bSynthId), { id: 'b' }),
+			replace(path(metaPath, 'items', bSynthId), {
+				status: 'completed',
+				action: 'read',
+				log: {}
+			}),
+			replace(path(metaPath, 'actions', 'read', 'many', 'status'), 'completed'),
+			replace(path('test', 'order', 'batch-id'), [aSynthId, bSynthId])
 		]);
 	});
 

@@ -6,7 +6,6 @@ import { restResourceConfig } from '../../src/RestResourceConfig';
 import { ResourceResponseStatus } from '../../src/ResourceProvider';
 
 describe('RestResourceConfig', () => {
-
 	beforeEach(() => {
 		global.fetch.reset();
 	});
@@ -16,7 +15,7 @@ describe('RestResourceConfig', () => {
 			const response = {
 				ok: true,
 				json: () => {
-					return [{ id: '1' }]
+					return [{ id: '1' }];
 				}
 			};
 			global.fetch.returns(response);
@@ -36,7 +35,7 @@ describe('RestResourceConfig', () => {
 				const response = {
 					ok: true,
 					json: () => {
-						return [{ id: '1' }]
+						return [{ id: '1' }];
 					}
 				};
 				global.fetch.returns(response);
@@ -46,10 +45,12 @@ describe('RestResourceConfig', () => {
 				});
 				const readResult = await config.read();
 				assert.isTrue(global.fetch.calledOnce);
-				assert.isTrue(global.fetch.calledWith('https://test.origin.com/tests', {
-					method: 'GET',
-					headers: { 'Content-Type': 'application/json' }
-				}));
+				assert.isTrue(
+					global.fetch.calledWith('https://test.origin.com/tests', {
+						method: 'GET',
+						headers: { 'Content-Type': 'application/json' }
+					})
+				);
 				assert.deepEqual(readResult, {
 					data: [{ id: '1' }],
 					status: ResourceResponseStatus.success
@@ -107,7 +108,7 @@ describe('RestResourceConfig', () => {
 				const response = {
 					ok: true,
 					json: () => {
-						return [{ id: '1' }]
+						return [{ id: '1' }];
 					}
 				};
 				global.fetch.returns(response);
@@ -126,10 +127,12 @@ describe('RestResourceConfig', () => {
 				});
 				const readResult = await config.read();
 				assert.isTrue(global.fetch.calledOnce);
-				assert.isTrue(global.fetch.calledWith('custom/https://test.origin.com/tests', {
-					method: 'GET',
-					headers: { 'Content-Type': 'application/json' }
-				}));
+				assert.isTrue(
+					global.fetch.calledWith('custom/https://test.origin.com/tests', {
+						method: 'GET',
+						headers: { 'Content-Type': 'application/json' }
+					})
+				);
 				assert.deepEqual(readResult, {
 					data: [{ id: '1' }],
 					status: ResourceResponseStatus.success
@@ -140,7 +143,7 @@ describe('RestResourceConfig', () => {
 				const response = {
 					ok: true,
 					json: () => {
-						return [{ id: '1' }]
+						return [{ id: '1' }];
 					}
 				};
 				global.fetch.returns(response);
