@@ -45,7 +45,7 @@ export default provider<TodoResource>({
 	read: () => {
 		// fetch/load and the resource however required and return
 		// the read function supports returning an async response
-		return { data: [], status: ResourceResponseStatus.success };
+		return { data: [], success: true };
 	}
 });
 ```
