@@ -74,7 +74,7 @@ describe('commands', () => {
 				log: {}
 			}),
 			replace(path(metaPath, 'actions', 'read', 'many', 'status'), 'completed'),
-			replace(path('test', 'order', 'batch-id'), [aSynthId, bSynthId])
+			replace(path('test', 'order', 'batch-Id'), [aSynthId, bSynthId])
 		]);
 	});
 
