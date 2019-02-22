@@ -4,7 +4,7 @@ const { assert } = intern.getPlugin('chai');
 
 import Store from '@dojo/framework/stores/Store';
 import { registerStoreInjector } from '@dojo/framework/stores/StoreInjector';
-import provider, { ResourceResponseStatus } from '../../src/provider';
+import provider from '../../src/provider';
 
 let store: Store;
 let registry: any;
@@ -25,7 +25,7 @@ describe('ResourceProvider', () => {
 			},
 			read: () => {
 				readCallCount++;
-				return { data: [{ id: 'a' }], status: ResourceResponseStatus.success };
+				return { data: [{ id: 'a' }], success: true };
 			}
 		});
 
@@ -65,7 +65,7 @@ describe('ResourceProvider', () => {
 			},
 			read: () => {
 				readCallCount++;
-				return { data: [{ id: 'a' }], status: ResourceResponseStatus.success };
+				return { data: [{ id: 'a' }], success: true };
 			}
 		});
 
@@ -101,7 +101,7 @@ describe('ResourceProvider', () => {
 			},
 			read: () => {
 				readCallCount++;
-				return { data: [{ id: 'a' }], status: ResourceResponseStatus.success };
+				return { data: [{ id: 'a' }], success: true };
 			}
 		});
 
@@ -140,7 +140,7 @@ describe('ResourceProvider', () => {
 				return resource;
 			},
 			read: () => {
-				return { data: [{ id: 'a' }], status: ResourceResponseStatus.success };
+				return { data: [{ id: 'a' }], success: true };
 			}
 		});
 

@@ -3,7 +3,6 @@ const { assert } = intern.getPlugin('chai');
 
 import global from '@dojo/framework/shim/global';
 import config from '../../../src/rest/config';
-import { ResourceResponseStatus } from '../../../src/provider';
 
 describe('RestResourceConfig', () => {
 	beforeEach(() => {
@@ -53,7 +52,7 @@ describe('RestResourceConfig', () => {
 				);
 				assert.deepEqual(readResult, {
 					data: [{ id: '1' }],
-					status: ResourceResponseStatus.success
+					success: true
 				});
 			});
 			it('Should call read function and return failure payload when resource request is not okay', async () => {
@@ -69,7 +68,7 @@ describe('RestResourceConfig', () => {
 				assert.isTrue(global.fetch.calledOnce);
 				assert.deepEqual(readResult, {
 					data: [],
-					status: ResourceResponseStatus.failed
+					success: false
 				});
 			});
 			it('Should call read function and return failure payload when an error is throw during the resource request', async () => {
@@ -82,7 +81,7 @@ describe('RestResourceConfig', () => {
 				assert.isTrue(global.fetch.calledOnce);
 				assert.deepEqual(readResult, {
 					data: [],
-					status: ResourceResponseStatus.failed
+					success: false
 				});
 			});
 		});
@@ -135,7 +134,7 @@ describe('RestResourceConfig', () => {
 				);
 				assert.deepEqual(readResult, {
 					data: [{ id: '1' }],
-					status: ResourceResponseStatus.success
+					success: true
 				});
 			});
 

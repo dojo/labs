@@ -10,18 +10,13 @@ import Store from '@dojo/framework/stores/Store';
 export type Status = 'failed' | 'loading' | 'completed';
 export type Action = 'create' | 'remove' | 'update' | 'read';
 
-export enum ResourceResponseStatus {
-	failed = 0,
-	success = 1
-}
-
 export interface Resource<S> {
 	getOrRead(): S[];
 }
 
 export interface ManyResourceResponse<S> {
 	data: S[];
-	status: ResourceResponseStatus;
+	success: boolean;
 }
 
 export interface ResourceRead<S> {

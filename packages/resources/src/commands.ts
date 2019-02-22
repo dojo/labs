@@ -4,7 +4,7 @@ import { Command, createCommandFactory } from '@dojo/framework/stores/process';
 import { replace } from '@dojo/framework/stores/state/operations';
 import { uuid } from '@dojo/framework/core/util';
 import { PatchOperation } from '@dojo/framework/stores/state/Patch';
-import { ResourceConfig, ResourceResponseStatus, ManyResourceResponse } from './provider';
+import { ResourceConfig, ManyResourceResponse } from './provider';
 import { StatePaths } from '@dojo/framework/stores/Store';
 
 export interface ReadManyPayload {
@@ -42,7 +42,7 @@ function processReadMany(
 	const metaPath = path(pathPrefix, 'meta');
 	const { template } = config;
 
-	if (result.status === ResourceResponseStatus.failed) {
+	if (!result.success) {
 		throw new Error('Read many operation failed');
 	}
 

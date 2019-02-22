@@ -3,7 +3,6 @@ const { assert } = intern.getPlugin('chai');
 
 import Store from '@dojo/framework/stores/Store';
 import { beforeReadMany, readMany } from '../../src/commands';
-import { ResourceResponseStatus } from '../../src/provider';
 import { ReplacePatchOperation } from '@dojo/framework/stores/state/Patch';
 import { replace } from '@dojo/framework/stores/state/operations';
 
@@ -25,7 +24,7 @@ describe('commands', () => {
 			config: {
 				template: () => {},
 				read: async () => {
-					return { data: [], status: ResourceResponseStatus.success };
+					return { data: [], success: true };
 				}
 			},
 			batchId: 'batchId',
@@ -47,7 +46,7 @@ describe('commands', () => {
 			config: {
 				template: (item: any) => item,
 				read: async () => {
-					return { data: [{ id: 'a' }, { id: 'b' }], status: ResourceResponseStatus.success };
+					return { data: [{ id: 'a' }, { id: 'b' }], success: true };
 				}
 			},
 			batchId: 'batch-Id',
@@ -86,7 +85,7 @@ describe('commands', () => {
 			config: {
 				template: () => {},
 				read: async () => {
-					return { data: [], status: ResourceResponseStatus.failed };
+					return { data: [], success: false };
 				}
 			},
 			batchId: 'batchId',

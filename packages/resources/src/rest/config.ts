@@ -1,5 +1,5 @@
 import fetch from '@dojo/framework/shim/fetch';
-import { ResourceConfig, ResourceResponseStatus } from './../provider';
+import { ResourceConfig } from './../provider';
 
 export interface RestResourceUrlOptions {
 	origin: string;
@@ -71,12 +71,12 @@ export function config<S>(config: RestResource<S>): ResourceConfig<S> {
 					}
 				});
 				if (!response.ok) {
-					return { data: [], status: ResourceResponseStatus.failed };
+					return { data: [], success: false };
 				}
 				const json = await response.json();
-				return { data: json, status: ResourceResponseStatus.success };
+				return { data: json, success: true };
 			} catch (e) {
-				return { data: [], status: ResourceResponseStatus.failed };
+				return { data: [], success: false };
 			}
 		}
 	};
