@@ -27,7 +27,7 @@ const r = renderer(() => <MyWidget />);
 r.mount({ registry });
 ```
 
-Create resource providers required by the application. The resource provider accepts a configuration to tell it how to deal with working with the resource.
+Create resource providers required by the application. The resource provider accepts a configuration to tell it how to work with the resource.
 
 > src/TodoResourceProvider.ts
 ```ts
