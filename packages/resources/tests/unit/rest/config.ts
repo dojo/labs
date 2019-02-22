@@ -2,8 +2,8 @@ const { it, describe, beforeEach } = intern.getInterface('bdd');
 const { assert } = intern.getPlugin('chai');
 
 import global from '@dojo/framework/shim/global';
-import config from '../../src/rest/config';
-import { ResourceResponseStatus } from '../../src/provider';
+import config from '../../../src/rest/config';
+import { ResourceResponseStatus } from '../../../src/provider';
 
 describe('RestResourceConfig', () => {
 	beforeEach(() => {

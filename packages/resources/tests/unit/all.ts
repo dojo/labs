@@ -1,3 +1,3 @@
 import './commands';
-import './ResourceProvider';
-import './RestResourceConfig';
+import './provider';
+import './rest/config';

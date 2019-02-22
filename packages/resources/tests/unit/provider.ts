@@ -1,3 +1,4 @@
+
 const { describe, it, beforeEach } = intern.getInterface('bdd');
 const { assert } = intern.getPlugin('chai');
 
