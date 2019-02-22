@@ -9,7 +9,7 @@ export interface ResourceIdMap {
 }
 
 export interface ResourceOrder {
-	[index: string]: string | string[];
+	[index: string]: string[];
 }
 
 export interface ResourceMetaActionStatus {

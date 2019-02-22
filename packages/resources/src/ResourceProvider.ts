@@ -1,8 +1,8 @@
-import { uuid } from './uuid';
+import { uuid } from '@dojo/framework/core/util';
 import WidgetBase from '@dojo/framework/widget-core/WidgetBase';
 import { ResourceState } from './interfaces';
-import { createProcessFactoryWith } from '@dojo/framework/stores/process';
-import { beforeReadMany, readMany } from './commands';
+import { createProcessFactoryWith, createProcess, ProcessExecutor } from '@dojo/framework/stores/process';
+import { beforeReadMany, readMany, failedResource, ReadManyPayload } from './commands';
 import { RenderResult, Constructor } from '@dojo/framework/widget-core/interfaces';
 import alwaysRender from '@dojo/framework/widget-core/decorators/alwaysRender';
 import Store from '@dojo/framework/stores/Store';
@@ -25,7 +25,7 @@ export interface ManyResourceResponse<S> {
 }
 
 export interface ResourceRead<S> {
-	(): Promise<ManyResourceResponse<S>>;
+	(): Promise<ManyResourceResponse<S>> | ManyResourceResponse<S>;
 }
 
 export interface ResourceConfig<S> {
@@ -38,27 +38,30 @@ export interface ResourceProviderProperties<S> {
 	renderer(resource: Resource<S>): RenderResult;
 }
 
-export function createResourceProvider<S>(
+export function resourceProvider<S>(
 	config: ResourceConfig<S>
 ): Constructor<WidgetBase<ResourceProviderProperties<S>>> {
 	const pathPrefix = uuid();
 	const { idKey = 'id' } = config;
-	const createProcess = createProcessFactoryWith([
+	const failedResourceProcess = createProcess(`${pathPrefix}-failed-resource`, [failedResource]);
+	const createProcessWithError = createProcessFactoryWith([
 		() => ({
 			after: (error, result) => {
 				if (error) {
+					const { action, type, pathPrefix } = result.payload;
 					result.store.apply(result.undoOperations, true);
+					result.executor(failedResourceProcess, { action, type, pathPrefix });
 				}
 			}
 		})
 	]);
-	const readManyProcess = createProcess(`${pathPrefix}-read-many`, [beforeReadMany, readMany]);
+	const readManyProcess = createProcessWithError(`${pathPrefix}-read-many`, [beforeReadMany, readMany]);
 
 	@alwaysRender()
 	class ResourceProvider extends WidgetBase<ResourceProviderProperties<S>> {
-		private _initial = false;
+		private _initial = true;
 		private _store: Store<ResourceState<S>>;
-		private _readManyProcess: any;
+		private _readManyProcess: ProcessExecutor<ResourceState<any>, ReadManyPayload, ReadManyPayload>;
 
 		private _getOrRead(): S[] {
 			const currentStatus =
@@ -78,25 +81,17 @@ export function createResourceProvider<S>(
 					}
 				});
 				this._initial = false;
-				this._readManyProcess({ config, pathPrefix, batchId: uuid(), type: 'read', idKey });
+				this._readManyProcess({ pathPrefix, config, batchId: uuid(), type: 'many', action: 'read', idKey });
 				return [];
 			}
 
-			const itemIds = this._store.get(this._store.path(pathPrefix, 'order'));
-			if (!itemIds) {
-				return [];
-			}
+			const itemIds = this._store.get(this._store.path(pathPrefix, 'order')) || {};
 			const data = this._store.get(this._store.path(pathPrefix, 'data'));
 			const orderedData: any = [];
 			Object.keys(itemIds).forEach((objectKey) => {
-				const item = itemIds[objectKey];
-				if (Array.isArray(item)) {
-					item.forEach((id) => {
-						data[id] && orderedData.push(data[id]);
-					});
-				} else if (item) {
-					data[item] && orderedData.push(data[item]);
-				}
+				itemIds[objectKey].forEach((id) => {
+					data[id] && orderedData.push(data[id]);
+				});
 			});
 
 			return orderedData;
@@ -123,3 +118,5 @@ export function createResourceProvider<S>(
 
 	return ResourceProvider;
 }
+
+export default resourceProvider;

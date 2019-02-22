@@ -30,6 +30,7 @@ describe('commands', () => {
 				}
 			},
 			batchId: 'batchId',
+			action: 'action',
 			type: 'type'
 		};
 		const operations = await readMany({ at, get, path, payload });
@@ -51,6 +52,7 @@ describe('commands', () => {
 				}
 			},
 			batchId: 'batch-Id',
+			action: 'action',
 			type: 'type'
 		};
 		const operations = await readMany({ at, get, path, payload });
@@ -97,6 +99,7 @@ describe('commands', () => {
 				}
 			},
 			batchId: 'batchId',
+			action: 'action',
 			type: 'type'
 		};
 		try {

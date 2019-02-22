@@ -1,8 +1,5 @@
-import WidgetBase from '@dojo/framework/widget-core/WidgetBase';
-import { Constructor } from '@dojo/framework/widget-core/interfaces';
+import fetch from '@dojo/framework/shim/fetch';
 import {
-	createResourceProvider,
-	ResourceProviderProperties,
 	ResourceConfig,
 	ResourceResponseStatus
 } from './ResourceProvider';
@@ -47,9 +44,7 @@ const DEFAULT_REST_CONFIG: {
 	}
 };
 
-export function createRestResourceProvider<S>(
-	config: RestResource<S>
-): Constructor<WidgetBase<ResourceProviderProperties<S>>> {
+export function restResourceConfig<S>(config: RestResource<S>): ResourceConfig<S> {
 	let {
 		idKey = 'id',
 		name,
@@ -62,7 +57,7 @@ export function createRestResourceProvider<S>(
 
 	many = { ...DEFAULT_REST_CONFIG.many, ...many };
 
-	const resourceConfig: ResourceConfig<S> = {
+	return {
 		idKey,
 		template,
 		async read() {
@@ -88,6 +83,4 @@ export function createRestResourceProvider<S>(
 			}
 		}
 	};
-
-	return createResourceProvider<S>(resourceConfig);
 }
