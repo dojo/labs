@@ -10,15 +10,31 @@
 		{ "browserName": "node" }
 	],
 
+	"node": {
+		"plugins+": [
+			{
+				"script": "./dist/dev/tests/support/loadJsdom.js",
+				"useLoader": true
+			}
+		]
+	},
+
 	"browser": {
 		"loader": {
 			"script": "./node_modules/@dojo/scripts/intern/loader.js",
 			"options": {
 				"packages": [
 					{ "name": "src", "location": "dist/dev/src" },
-					{ "name": "tests", "location": "dist/dev/tests" }
+					{ "name": "tests", "location": "dist/dev/tests" },
+					{ "name": "whatwg-fetch", "location": "node_modules/whatwg-fetch", "main": "dist/fetch.umd.js" }
 				]
 			}
-		}
+		},
+		"plugins+": [
+			{
+				"script": "./dist/dev/tests/support/mockFetch.js",
+				"useLoader": true
+			}
+		]
 	}
 }
