@@ -1,5 +1,5 @@
 import fetch from '@dojo/framework/shim/fetch';
-import { ResourceConfig, ResourceResponseStatus } from './ResourceProvider';
+import { ResourceConfig, ResourceResponseStatus } from './../provider';
 
 export interface RestResourceUrlOptions {
 	origin: string;
@@ -41,7 +41,7 @@ const DEFAULT_REST_CONFIG: {
 	}
 };
 
-export function restResourceConfig<S>(config: RestResource<S>): ResourceConfig<S> {
+export function config<S>(config: RestResource<S>): ResourceConfig<S> {
 	let {
 		idKey = 'id',
 		name,
@@ -81,3 +81,5 @@ export function restResourceConfig<S>(config: RestResource<S>): ResourceConfig<S
 		}
 	};
 }
+
+export default config;

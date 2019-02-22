@@ -3,8 +3,7 @@ const { assert } = intern.getPlugin('chai');
 
 import Store from '@dojo/framework/stores/Store';
 import { registerStoreInjector } from '@dojo/framework/stores/StoreInjector';
-import { ResourceResponseStatus } from '../../src/ResourceProvider';
-import { resourceProvider } from '../../src/ResourceProvider';
+import provider, { ResourceResponseStatus } from '../../src/provider';
 
 let store: Store;
 let registry: any;
@@ -18,7 +17,7 @@ describe('ResourceProvider', () => {
 	it('Should fetch resources and return them to the providers renderer', () => {
 		let readCallCount = 0;
 		let renderCount = 0;
-		const TestResourceProvider = resourceProvider({
+		const TestResourceProvider = provider({
 			idKey: 'id',
 			template: (resource: any) => {
 				return resource;
@@ -59,7 +58,7 @@ describe('ResourceProvider', () => {
 	it('Should default idKey to id and fetch resources', () => {
 		let readCallCount = 0;
 		let renderCount = 0;
-		const TestResourceProvider = resourceProvider({
+		const TestResourceProvider = provider({
 			template: (resource: any) => {
 				return resource;
 			},
@@ -94,7 +93,7 @@ describe('ResourceProvider', () => {
 
 	it('Should force read for the first render of a ResourceProvider', () => {
 		let readCallCount = 0;
-		const TestResourceProvider = resourceProvider({
+		const TestResourceProvider = provider({
 			idKey: 'id',
 			template: (resource: any) => {
 				return resource;
@@ -134,7 +133,7 @@ describe('ResourceProvider', () => {
 
 	it('should detach store from provider when it is destroyed', () => {
 		let invalidateCount = 0;
-		const ResourceProvider = resourceProvider({
+		const ResourceProvider = provider({
 			idKey: 'id',
 			template: (resource: any) => {
 				return resource;
@@ -174,7 +173,7 @@ describe('ResourceProvider', () => {
 	});
 
 	it('Should revert on a read error', () => {
-		const TestResourceProvider = resourceProvider({
+		const TestResourceProvider = provider({
 			idKey: 'id',
 			template: (resource: any) => {
 				return resource;

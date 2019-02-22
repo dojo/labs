@@ -2,8 +2,8 @@ const { it, describe, beforeEach } = intern.getInterface('bdd');
 const { assert } = intern.getPlugin('chai');
 
 import global from '@dojo/framework/shim/global';
-import { restResourceConfig } from '../../src/RestResourceConfig';
-import { ResourceResponseStatus } from '../../src/ResourceProvider';
+import config from '../../src/rest/config';
+import { ResourceResponseStatus } from '../../src/provider';
 
 describe('RestResourceConfig', () => {
 	beforeEach(() => {
@@ -19,13 +19,13 @@ describe('RestResourceConfig', () => {
 				}
 			};
 			global.fetch.returns(response);
-			const config = restResourceConfig({
+			const restConfig = config({
 				name: 'tests',
 				origin: 'https://test.origin.com'
 			});
-			assert.strictEqual(config.idKey, 'id');
-			assert.isFunction(config.template);
-			assert.isFunction(config.read);
+			assert.strictEqual(restConfig.idKey, 'id');
+			assert.isFunction(restConfig.template);
+			assert.isFunction(restConfig.read);
 		});
 	});
 
@@ -39,11 +39,11 @@ describe('RestResourceConfig', () => {
 					}
 				};
 				global.fetch.returns(response);
-				const config = restResourceConfig({
+				const restConfig = config({
 					name: 'tests',
 					origin: 'https://test.origin.com'
 				});
-				const readResult = await config.read();
+				const readResult = await restConfig.read();
 				assert.isTrue(global.fetch.calledOnce);
 				assert.isTrue(
 					global.fetch.calledWith('https://test.origin.com/tests', {
@@ -61,11 +61,11 @@ describe('RestResourceConfig', () => {
 					ok: false
 				};
 				global.fetch.returns(response);
-				const config = restResourceConfig({
+				const restConfig = config({
 					name: 'tests',
 					origin: 'https://test.origin.com'
 				});
-				const readResult = await config.read();
+				const readResult = await restConfig.read();
 				assert.isTrue(global.fetch.calledOnce);
 				assert.deepEqual(readResult, {
 					data: [],
@@ -74,11 +74,11 @@ describe('RestResourceConfig', () => {
 			});
 			it('Should call read function and return failure payload when an error is throw during the resource request', async () => {
 				global.fetch.throws();
-				const config = restResourceConfig({
+				const restConfig = config({
 					name: 'tests',
 					origin: 'https://test.origin.com'
 				});
-				const readResult = await config.read();
+				const readResult = await restConfig.read();
 				assert.isTrue(global.fetch.calledOnce);
 				assert.deepEqual(readResult, {
 					data: [],
@@ -89,7 +89,7 @@ describe('RestResourceConfig', () => {
 
 		describe('Custom', () => {
 			it('Should throw an error if read many is set to false', async () => {
-				const config = restResourceConfig({
+				const restConfig = config({
 					name: 'tests',
 					origin: 'https://test.origin.com',
 					many: {
@@ -97,7 +97,7 @@ describe('RestResourceConfig', () => {
 					}
 				});
 				try {
-					await config.read();
+					await restConfig.read();
 					assert.fail('should have thrown an error');
 				} catch (error) {
 					assert.strictEqual(error.message, 'ReadMany Resource Operation not supported for tests');
@@ -112,7 +112,7 @@ describe('RestResourceConfig', () => {
 					}
 				};
 				global.fetch.returns(response);
-				const config = restResourceConfig({
+				const restConfig = config({
 					name: 'tests',
 					origin: 'https://test.origin.com',
 					many: {
@@ -125,7 +125,7 @@ describe('RestResourceConfig', () => {
 						}
 					}
 				});
-				const readResult = await config.read();
+				const readResult = await restConfig.read();
 				assert.isTrue(global.fetch.calledOnce);
 				assert.isTrue(
 					global.fetch.calledWith('custom/https://test.origin.com/tests', {
@@ -147,14 +147,14 @@ describe('RestResourceConfig', () => {
 					}
 				};
 				global.fetch.returns(response);
-				const config = restResourceConfig({
+				const restConfig = config({
 					name: 'tests',
 					origin: 'https://test.origin.com',
 					idKey: 'special'
 				});
-				assert.strictEqual(config.idKey, 'special');
-				assert.isFunction(config.template);
-				assert.isFunction(config.read);
+				assert.strictEqual(restConfig.idKey, 'special');
+				assert.isFunction(restConfig.template);
+				assert.isFunction(restConfig.read);
 			});
 		});
 	});

@@ -31,7 +31,7 @@ Create resource providers required by the application. The resource provider acc
 
 > src/TodoResourceProvider.ts
 ```ts
-import resourceProvider from '@dojo-labs/resources/ResourceProvider';
+import provider from '@dojo-labs/resources/provider';
 
 interface TodoResource {
 	id: string;
@@ -39,7 +39,7 @@ interface TodoResource {
 	completed?: boolean;
 }
 
-export default resourceProvider<TodoResource>({
+export default provider<TodoResource>({
 	// template to transform the resource items loaded
 	template: (item: TodoResource) => item,
 	read: () => {
@@ -83,8 +83,8 @@ Resources are a generic mechanism to deal with any resource within your applicat
 
 > src/TodoResourceProvider.ts
 ```ts
-import resourceProvider from '@dojo-labs/resources/ResourceProvider';
-import restResourceConfig from '@dojo-labs/resources/RestResourceConfig';
+import provider from '@dojo-labs/resources/provider';
+import config from '@dojo-labs/resources/rest/config';
 
 interface TodoResource {
 	id: string;
@@ -92,12 +92,12 @@ interface TodoResource {
 	completed?: boolean;
 }
 
-const todoResourceConfig = restResourceConfig({
+const todoResourceConfig = config({
 	origin: 'https://my-todo-service.com',
 	name: 'todo'
 });
 
-export default resourceProvider<TodoResource>(todoResourceConfig);
+export default provider<TodoResource>(todoResourceConfig);
 ```
 
 Using the default configuration when calling `getOrRead` from the resource in your application will result in a `fetch` call to load the resources asynchronously, which will be available to your application once the request has completed.

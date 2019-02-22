@@ -3,7 +3,7 @@ const { assert } = intern.getPlugin('chai');
 
 import Store from '@dojo/framework/stores/Store';
 import { beforeReadMany, readMany } from '../../src/commands';
-import { ResourceResponseStatus } from '../../src/ResourceProvider';
+import { ResourceResponseStatus } from '../../src/provider';
 import { ReplacePatchOperation } from '@dojo/framework/stores/state/Patch';
 import { replace } from '@dojo/framework/stores/state/operations';
 

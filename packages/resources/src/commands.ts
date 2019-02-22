@@ -4,7 +4,7 @@ import { Command, createCommandFactory } from '@dojo/framework/stores/process';
 import { replace } from '@dojo/framework/stores/state/operations';
 import { uuid } from '@dojo/framework/core/util';
 import { PatchOperation } from '@dojo/framework/stores/state/Patch';
-import { ResourceConfig, ResourceResponseStatus, ManyResourceResponse } from './ResourceProvider';
+import { ResourceConfig, ResourceResponseStatus, ManyResourceResponse } from './provider';
 import { StatePaths } from '@dojo/framework/stores/Store';
 
 export interface ReadManyPayload {

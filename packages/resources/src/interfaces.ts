@@ -1,4 +1,4 @@
-import { Status, Action } from './ResourceProvider';
+import { Status, Action } from './provider';
 
 export interface ResourceData<S> {
 	[index: string]: S;
