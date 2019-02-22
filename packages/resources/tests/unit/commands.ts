@@ -2,7 +2,6 @@ const { describe, it } = intern.getInterface('bdd');
 const { assert } = intern.getPlugin('chai');
 
 import Store from '@dojo/framework/stores/Store';
-import { Pointer } from '@dojo/framework/stores/state/Pointer';
 import { beforeReadMany, readMany } from '../../src/commands';
 import { ResourceResponseStatus } from '../../src/ResourceProvider';
 import { ReplacePatchOperation } from '@dojo/framework/stores/state/Patch';
