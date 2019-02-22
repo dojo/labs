@@ -11,7 +11,7 @@ describe('RestResourceConfig', () => {
 	});
 
 	describe('Default Configuration', () => {
-		it('Should return the default configuration', async () => {
+		it('Should return the default configuration', () => {
 			const response = {
 				ok: true,
 				json: () => {
@@ -139,7 +139,7 @@ describe('RestResourceConfig', () => {
 				});
 			});
 
-			it('Custom idKey', async () => {
+			it('Custom idKey', () => {
 				const response = {
 					ok: true,
 					json: () => {
