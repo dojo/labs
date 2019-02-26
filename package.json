@@ -4,8 +4,9 @@
 	"scripts": {
 		"build": "lerna run build",
 		"release": "lerna run build && lerna publish --contents dist/release",
-		"prettier": "prettier --write  \"packages/**/{src,tests}/**/*.{ts,tsx,md}\"",
-		"create": "lerna create"
+		"prettier": "prettier --write  \"packages/**/{src,tests}/**/*.{ts,tsx,md}\" --ignore-path .gitignore",
+		"create": "lerna create",
+		"test": "lerna run test"
 	},
 	"devDependencies": {
 		"husky": "~0.14.3",

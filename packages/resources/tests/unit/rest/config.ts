@@ -52,7 +52,8 @@ describe('RestResourceConfig', () => {
 				);
 				assert.deepEqual(readResult, {
 					data: [{ id: '1' }],
-					success: true
+					success: true,
+					total: 1
 				});
 			});
 			it('Should call read function and return failure payload when resource request is not okay', async () => {
@@ -68,7 +69,8 @@ describe('RestResourceConfig', () => {
 				assert.isTrue(global.fetch.calledOnce);
 				assert.deepEqual(readResult, {
 					data: [],
-					success: false
+					success: false,
+					total: 0
 				});
 			});
 			it('Should call read function and return failure payload when an error is throw during the resource request', async () => {
@@ -81,7 +83,8 @@ describe('RestResourceConfig', () => {
 				assert.isTrue(global.fetch.calledOnce);
 				assert.deepEqual(readResult, {
 					data: [],
-					success: false
+					success: false,
+					total: 0
 				});
 			});
 		});
@@ -134,7 +137,8 @@ describe('RestResourceConfig', () => {
 				);
 				assert.deepEqual(readResult, {
 					data: [{ id: '1' }],
-					success: true
+					success: true,
+					total: 1
 				});
 			});
 

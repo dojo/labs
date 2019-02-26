@@ -6,21 +6,29 @@ import { beforeReadMany, readMany, failedResource, ReadManyPayload } from './com
 import { RenderResult, Constructor } from '@dojo/framework/widget-core/interfaces';
 import alwaysRender from '@dojo/framework/widget-core/decorators/alwaysRender';
 import Store from '@dojo/framework/stores/Store';
+import { Handle } from '@dojo/framework/core/Destroyable';
 
 export type Status = 'failed' | 'loading' | 'completed';
 export type Action = 'create' | 'remove' | 'update' | 'read';
 
+export interface PaginationOptions {
+	offset: number;
+	size: number;
+}
+
 export interface Resource<S> {
-	getOrRead(): S[];
+	getOrRead(options?: PaginationOptions): S[];
 }
 
 export interface ManyResourceResponse<S> {
 	data: S[];
+	total: number;
 	success: boolean;
 }
 
 export interface ResourceRead<S> {
 	(): Promise<ManyResourceResponse<S>> | ManyResourceResponse<S>;
+	(pagination?: PaginationOptions): Promise<ManyResourceResponse<S>> | ManyResourceResponse<S>;
 }
 
 export interface ResourceConfig<S> {
@@ -52,30 +60,52 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 
 	@alwaysRender()
 	class ResourceProvider extends WidgetBase<ResourceProviderProperties<S>> {
-		private _initial = true;
+		private _initiatorId = uuid();
 		private _store: Store<ResourceState<S>>;
 		private _readManyProcess: ProcessExecutor<ResourceState<any>, ReadManyPayload, ReadManyPayload>;
+		private _getOrReadHandle: Handle | undefined;
 
-		private _getOrRead(): S[] {
-			const currentStatus =
-				this._store.get(this._store.path(pathPrefix, 'meta', 'actions', 'read', 'many')) || {};
+		private _getOrRead(options?: PaginationOptions): S[] {
+			const statuses = this._store.get(this._store.path(pathPrefix, 'meta', 'actions', 'read', 'many')) || {};
+			let pagination = null;
+			if (options) {
+				pagination = this._store.get(this._store.path(pathPrefix, 'pagination', JSON.stringify(options)));
+			}
 
-			if (currentStatus.status === 'loading') {
+			if (statuses.loading && statuses.loading.indexOf(this._initiatorId) > -1) {
 				return [];
 			}
 
-			if (currentStatus.status !== 'completed' || this._initial) {
-				const handle = this._store.onChange(this._store.path(pathPrefix), () => {
-					this.invalidate();
+			if (
+				(options && !pagination) ||
+				(!statuses.completed || statuses.completed.indexOf(this._initiatorId) === -1)
+			) {
+				if (!this._getOrReadHandle) {
+					const storeHandle = this._store.onChange(this._store.path(pathPrefix, 'data'), () => {
+						this.invalidate();
+					});
+					this._getOrReadHandle = {
+						destroy: () => {
+							storeHandle.remove();
+						}
+					};
+					this.own(this._getOrReadHandle);
+				}
+				this._readManyProcess({
+					pathPrefix,
+					config,
+					batchId: uuid(),
+					type: 'many',
+					action: 'read',
+					idKey,
+					initiator: this._initiatorId,
+					pagination: options
 				});
-				this.own({
-					destroy: () => {
-						handle.remove();
-					}
-				});
-				this._initial = false;
-				this._readManyProcess({ pathPrefix, config, batchId: uuid(), type: 'many', action: 'read', idKey });
 				return [];
+			}
+
+			if (pagination) {
+				return pagination.ids.map((id) => data[id]);
 			}
 
 			const itemIds = this._store.get(this._store.path(pathPrefix, 'order')) || {};
@@ -102,8 +132,8 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 			}
 
 			return renderer({
-				getOrRead: () => {
-					return this._getOrRead();
+				getOrRead: (pagination?: PaginationOptions) => {
+					return this._getOrRead(pagination);
 				}
 			});
 		}

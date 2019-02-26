@@ -1,4 +1,3 @@
-
 const { describe, it, beforeEach } = intern.getInterface('bdd');
 const { assert } = intern.getPlugin('chai');
 
@@ -25,7 +24,7 @@ describe('ResourceProvider', () => {
 			},
 			read: () => {
 				readCallCount++;
-				return { data: [{ id: 'a' }], success: true };
+				return { data: [{ id: 'a' }], success: true, total: 1 };
 			}
 		});
 
@@ -65,7 +64,7 @@ describe('ResourceProvider', () => {
 			},
 			read: () => {
 				readCallCount++;
-				return { data: [{ id: 'a' }], success: true };
+				return { data: [{ id: 'a' }], success: true, total: 1 };
 			}
 		});
 
@@ -101,7 +100,7 @@ describe('ResourceProvider', () => {
 			},
 			read: () => {
 				readCallCount++;
-				return { data: [{ id: 'a' }], success: true };
+				return { data: [{ id: 'a' }], success: true, total: 1 };
 			}
 		});
 
@@ -140,7 +139,7 @@ describe('ResourceProvider', () => {
 				return resource;
 			},
 			read: () => {
-				return { data: [{ id: 'a' }], success: true };
+				return { data: [{ id: 'a' }], success: true, total: 1 };
 			}
 		});
 
@@ -149,9 +148,12 @@ describe('ResourceProvider', () => {
 				invalidateCount++;
 				super.invalidate();
 			}
+			destroy() {
+				super.destroy();
+			}
 		}
 
-		const widgetOne: any = new TestResourceProvider();
+		const widgetOne = new TestResourceProvider();
 		widgetOne.registry.base = registry;
 		widgetOne.__setProperties__({
 			renderer: (resource: any) => {
@@ -170,7 +172,7 @@ describe('ResourceProvider', () => {
 		});
 		widgetOne.destroy();
 		widgetTwo.__render__();
-		assert.strictEqual(invalidateCount, 6);
+		assert.strictEqual(invalidateCount, 4);
 	});
 
 	it('Should revert on a read error', () => {
@@ -195,7 +197,7 @@ describe('ResourceProvider', () => {
 		widgetOne.__render__();
 		const pathPrefix = Object.keys((store as any)._state)[0];
 		const metaPath = store.path(pathPrefix, 'meta');
-		const status = store.get(store.path(metaPath, 'actions', 'read', 'many', 'status'));
-		assert.strictEqual(status, 'failed');
+		const status = store.get(store.path(metaPath, 'actions', 'read', 'many', 'failed'));
+		assert.lengthOf(status, 1);
 	});
 });

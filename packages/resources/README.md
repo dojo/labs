@@ -78,7 +78,7 @@ export default class MyWidget extends WidgetBase {
 
 ### Reading Restful Resources
 
-Resources are a generic mechanism to deal with any resource within your application, however a common need is to load resources from a remote Restful service. To support this `@dojo-labs/resources` provides a configuration factory for dealing with these restful services, with default set od configurations.
+Resources is a generic mechanism to deal with any resource within your application, however a common need is to load resources from a remote Restful service. To support this `@dojo-labs/resources` provides a configuration factory for dealing with these restful services, with default set od configurations.
 
 
 > src/TodoResourceProvider.ts
@@ -102,4 +102,5 @@ export default provider<TodoResource>(todoResourceConfig);
 
 Using the default configuration when calling `getOrRead` from the resource in your application will result in a `fetch` call to load the resources asynchronously, which will be available to your application once the request has completed.
 
-Using the default configuration, `getOrRead` will result in `GET` request to `https://my-todo-service/com/todo`.
+With the configuration in the example above, `getOrRead` will result in `GET` request to `https://my-todo-service/com/todo`.
+

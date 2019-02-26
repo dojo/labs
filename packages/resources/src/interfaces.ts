@@ -12,8 +12,15 @@ export interface ResourceOrder {
 	[index: string]: string[];
 }
 
+export interface Pagination {
+	ids: string[];
+	total: number;
+}
+
 export interface ResourceMetaActionStatus {
-	status: Status;
+	loading: string[];
+	failed: string[];
+	completed: string[];
 }
 
 export interface ResourceMetaActionType {
@@ -54,6 +61,9 @@ export interface ResourceState<S> {
 	[index: string]: {
 		data: ResourceData<S>;
 		idMap: ResourceIdMap;
+		pagination: {
+			[index: string]: Pagination;
+		};
 		order: ResourceOrder;
 		meta: ResourceMetaState;
 	};
@@ -75,74 +85,76 @@ export interface ResourceState<S> {
 // 		'order-id': ['2', '3'],
 // 		'order-is': '1'
 // 	},
+// 	pagination: {
+//		'stringified-pagination-options': {
+//			ids: [ '2', '3' ],
+//			total: 200
+//		}
+// },
 // 	meta: {
 // 		actions: {
 // 			read: {
 // 				one: {
-// 					status: 'loading'
+// 					'loading': [ 'initiator-id' ],
+// 					'failed': [ 'initiator-id' ],
+// 					'completed': [ 'initiator-id' ]
 // 				},
 // 				many: {
-// 					status: 'completed'
+// 					'loading': [ 'initiator-id' ],
+// 					'failed': [ 'initiator-id' ],
+// 					'completed': [ 'initiator-id' ]
 // 				}
 // 			},
 // 			create: {
 // 				one: {
-// 					status: 'loading'
+// 					'loading': [ 'initiator-id' ],
+// 					'failed': [ 'initiator-id' ],
+// 					'completed': [ 'initiator-id' ]
 // 				},
 // 				many: {
-// 					status: 'loading'
+// 					'loading': [ 'initiator-id' ],
+// 					'failed': [ 'initiator-id' ],
+// 					'completed': [ 'initiator-id' ]
 // 				}
 // 			}
 // 		},
 // 		items: {
 // 			'1': {
 //				create: {
+// 					'loading': [ 'initiator-id' ],
+// 					'failed': [ 'initiator-id' ],
+// 					'completed': [ 'initiator-id' ]
 //					'action-id': {
-//						'status': 'loading',
-//						'result': {}
-//					},
-//					'action-id': {
-//						'status': 'loading',
 //						'result': {}
 //					}
 //				},
 //				update: {
+// 					'loading': [ 'initiator-id' ],
+// 					'failed': [ 'initiator-id' ],
+// 					'completed': [ 'initiator-id' ]
 //					'action-id': {
 //						'status': 'loading',
 //						'result': {}
 //					}
 //				},
 //				remove: {
+// 					'loading': [ 'initiator-id' ],
+// 					'failed': [ 'initiator-id' ],
+// 					'completed': [ 'initiator-id' ]
 //					'action-id': {
 //						'status': 'loading',
 //						'result': {}
 //					}
 //				},
 //				read: {
+// 					'loading': [ 'initiator-id' ],
+// 					'failed': [ 'initiator-id' ],
+// 					'completed': [ 'initiator-id' ]
 //					'action-id': {
 //						'status': 'loading',
 //						'result': {}
 //					}
 //				}
-// 			},
-// 			'2': {
-// 				status: 'failed',
-// 				action: 'create'
-// 			}
-// 		},
-// 		items: {
-// 			'1': {
-// 				status: 'loading',
-// 				action: 'create',
-//				logs: {
-//					'action-id': {
-//						'result': {}
-//					}
-//				}
-// 			},
-// 			'2': {
-// 				status: 'failed',
-// 				action: 'create'
 // 			}
 // 		}
 // 	}
@@ -158,3 +170,5 @@ export interface ResourceState<S> {
 // read many ----> fails ----> return empty and status is to failed
 // create one ----> fails ----> optimistically added to
 // retry (action, id) ----> re-run clear the status - re-run the action
+
+//

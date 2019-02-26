@@ -12,8 +12,10 @@ const metaPath = store.path('test', 'meta');
 describe('commands', () => {
 	it('beforeReadMany', () => {
 		const { at, path, get } = store;
-		const operations = beforeReadMany({ at, get, path, payload: { pathPrefix: 'test' } as any });
-		assert.deepEqual(operations, [replace(path(metaPath, 'actions', 'read', 'many', 'status'), 'loading')]);
+		const operations = beforeReadMany({ at, get, path, payload: { pathPrefix: 'test', initiator: 'init' } as any });
+		assert.deepEqual(operations, [
+			replace(path(metaPath, 'actions', 'read', 'many', 'loading'), ['init'])
+		]);
 	});
 
 	it('readMany - no results', async () => {
@@ -23,17 +25,19 @@ describe('commands', () => {
 			idKey: 'id',
 			config: {
 				template: () => {},
-				read: async () => {
-					return { data: [], success: true };
+				read: () => {
+					return { data: [] as string[], total: 0, success: true };
 				}
 			},
 			batchId: 'batchId',
 			action: 'action',
-			type: 'type'
+			type: 'type',
+			initiator: 'init'
 		};
 		const operations = await readMany({ at, get, path, payload });
 		assert.deepEqual(operations, [
-			replace(path(metaPath, 'actions', 'read', 'many', 'status'), 'completed'),
+			replace(path(metaPath, 'actions', 'read', 'many', 'loading'), []),
+			replace(path(metaPath, 'actions', 'read', 'many', 'completed'), ['init']),
 			replace(path('test', 'order', 'batchId'), [])
 		]);
 	});
@@ -46,12 +50,13 @@ describe('commands', () => {
 			config: {
 				template: (item: any) => item,
 				read: async () => {
-					return { data: [{ id: 'a' }, { id: 'b' }], success: true };
+					return { data: [{ id: 'a' }, { id: 'b' }], total: 2, success: true };
 				}
 			},
 			batchId: 'batch-Id',
 			action: 'action',
-			type: 'type'
+			type: 'type',
+			initiator: 'init'
 		};
 		const operations = await readMany({ at, get, path, payload });
 
@@ -72,7 +77,8 @@ describe('commands', () => {
 				action: 'read',
 				log: {}
 			}),
-			replace(path(metaPath, 'actions', 'read', 'many', 'status'), 'completed'),
+			replace(path(metaPath, 'actions', 'read', 'many', 'loading'), []),
+			replace(path(metaPath, 'actions', 'read', 'many', 'completed'), ['init']),
 			replace(path('test', 'order', 'batch-Id'), [aSynthId, bSynthId])
 		]);
 	});
@@ -93,7 +99,7 @@ describe('commands', () => {
 			type: 'type'
 		};
 		try {
-			await readMany({ at, get, path, payload });
+			await readMany({ at, get, path, payload } as any);
 			assert.fail('Should throw error for failed `read`');
 		} catch (e) {
 			assert.strictEqual(e.message, 'Read many operation failed');

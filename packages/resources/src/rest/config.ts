@@ -1,10 +1,11 @@
 import fetch from '@dojo/framework/shim/fetch';
-import { ResourceConfig } from './../provider';
+import { ResourceConfig, PaginationOptions } from './../provider';
 
 export interface RestResourceUrlOptions {
 	origin: string;
 	name: string;
 	id?: string;
+	pagination?: PaginationOptions;
 }
 
 export interface RestResourceUrlFunction {
@@ -36,7 +37,13 @@ const DEFAULT_REST_CONFIG: {
 		read: {
 			optimistic: true,
 			verb: 'GET',
-			url: ({ origin, name }) => `${origin}/${name}`
+			url: ({ origin, name, pagination }) => {
+				let path = `${origin}/${name}`;
+				if (pagination) {
+					return `${path}?offset=${pagination.offset}&size=${pagination.size}`;
+				}
+				return path;
+			}
 		}
 	}
 };
@@ -57,13 +64,13 @@ export function config<S>(config: RestResource<S>): ResourceConfig<S> {
 	return {
 		idKey,
 		template,
-		async read() {
+		async read(pagination?: PaginationOptions) {
 			if (!many.read) {
 				throw new Error(`ReadMany Resource Operation not supported for ${name}`);
 			}
 			try {
 				const { url, verb } = many.read;
-				const path = url({ origin, name });
+				const path = url({ origin, name, pagination });
 				const response = await fetch(path, {
 					method: verb,
 					headers: {
@@ -71,12 +78,12 @@ export function config<S>(config: RestResource<S>): ResourceConfig<S> {
 					}
 				});
 				if (!response.ok) {
-					return { data: [], success: false };
+					return { data: [], total: 0, success: false };
 				}
 				const json = await response.json();
-				return { data: json, success: true };
+				return { data: json, total: json.length, success: true };
 			} catch (e) {
-				return { data: [], success: false };
+				return { data: [], total: 0, success: false };
 			}
 		}
 	};
