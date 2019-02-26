@@ -35,9 +35,9 @@ describe('ResourceProvider', () => {
 				renderCount++;
 				const result = resource.getOrRead();
 				if (renderCount === 1) {
-					assert.isEmpty(result);
+					assert.isUndefined(result);
 				} else {
-					assert.deepEqual(result, [{ id: 'a' }]);
+					assert.deepEqual(result, { data: [{ id: 'a' }], total: 1 });
 				}
 				return null;
 			}
@@ -75,9 +75,9 @@ describe('ResourceProvider', () => {
 				renderCount++;
 				const result = resource.getOrRead();
 				if (renderCount === 1) {
-					assert.isEmpty(result);
+					assert.isUndefined(result);
 				} else {
-					assert.deepEqual(result, [{ id: 'a' }]);
+					assert.deepEqual(result, { data: [{ id: 'a' }], total: 1 });
 				}
 				return null;
 			}

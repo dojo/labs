@@ -13,8 +13,14 @@ export interface ResourceOrder {
 }
 
 export interface Pagination {
-	ids: string[];
+	[index: string]: PaginationResult;
+}
+
+export interface PaginationResult {
 	total: number;
+	pages: {
+		[index: string]: string[];
+	};
 }
 
 export interface ResourceMetaActionStatus {
@@ -61,9 +67,7 @@ export interface ResourceState<S> {
 	[index: string]: {
 		data: ResourceData<S>;
 		idMap: ResourceIdMap;
-		pagination: {
-			[index: string]: Pagination;
-		};
+		pagination: Pagination;
 		order: ResourceOrder;
 		meta: ResourceMetaState;
 	};
@@ -86,9 +90,11 @@ export interface ResourceState<S> {
 // 		'order-is': '1'
 // 	},
 // 	pagination: {
-//		'stringified-pagination-options': {
-//			ids: [ '2', '3' ],
-//			total: 200
+//		'size-20': {
+//			'total': 200,
+//			'pages': {
+//				'page-1': [ '2', '3' ]
+//			}
 //		}
 // },
 // 	meta: {

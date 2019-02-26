@@ -10,14 +10,25 @@ import { Handle } from '@dojo/framework/core/Destroyable';
 
 export type Status = 'failed' | 'loading' | 'completed';
 export type Action = 'create' | 'remove' | 'update' | 'read';
+export type ActionType = 'many' | 'one';
 
 export interface PaginationOptions {
 	offset: number;
 	size: number;
 }
 
+export interface GetOrReadResult<S> {
+	data: S[];
+	total: number;
+}
+
 export interface Resource<S> {
-	getOrRead(options?: PaginationOptions): S[];
+	getOrRead(options?: PaginationOptions): undefined | GetOrReadResult<S>;
+}
+
+export interface IsLoadingOptions {
+	action?: Action;
+	global?: boolean;
 }
 
 export interface ManyResourceResponse<S> {
@@ -65,21 +76,26 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 		private _readManyProcess: ProcessExecutor<ResourceState<any>, ReadManyPayload, ReadManyPayload>;
 		private _getOrReadHandle: Handle | undefined;
 
-		private _getOrRead(options?: PaginationOptions): S[] {
+		private _getOrRead(options?: PaginationOptions): GetOrReadResult<S> | undefined {
 			const statuses = this._store.get(this._store.path(pathPrefix, 'meta', 'actions', 'read', 'many')) || {};
-			let pagination = null;
+			let paginationIds: string[] = [];
+			let total = 0;
 			if (options) {
-				pagination = this._store.get(this._store.path(pathPrefix, 'pagination', JSON.stringify(options)));
+				let pagination = this._store.get(this._store.path(pathPrefix, 'pagination', `size-${options.size}`)) || {};
+				if (pagination) {
+					paginationIds = pagination.pages[`page-${options.offset}`]
+					total = pagination.total;
+				}
 			}
 
 			if (statuses.loading && statuses.loading.indexOf(this._initiatorId) > -1) {
-				return [];
+				return undefined;
 			}
 
-			if (
-				(options && !pagination) ||
-				(!statuses.completed || statuses.completed.indexOf(this._initiatorId) === -1)
-			) {
+			const fetchResourcePage = options && !paginationIds.length;
+			const fetchResource = !statuses.completed || statuses.completed.indexOf(this._initiatorId) === -1
+
+			if (fetchResourcePage || fetchResource) {
 				if (!this._getOrReadHandle) {
 					const storeHandle = this._store.onChange(this._store.path(pathPrefix, 'data'), () => {
 						this.invalidate();
@@ -101,23 +117,29 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 					initiator: this._initiatorId,
 					pagination: options
 				});
-				return [];
+				return undefined;
 			}
 
-			if (pagination) {
-				return pagination.ids.map((id) => data[id]);
+			if (paginationIds.length) {
+				return {
+					data: paginationIds.map((id) => data[id]),
+					total
+				}
 			}
 
 			const itemIds = this._store.get(this._store.path(pathPrefix, 'order')) || {};
 			const data = this._store.get(this._store.path(pathPrefix, 'data'));
-			const orderedData: any = [];
+			const orderedData: S[] = [];
 			Object.keys(itemIds).forEach((objectKey) => {
 				itemIds[objectKey].forEach((id) => {
 					data[id] && orderedData.push(data[id]);
 				});
 			});
 
-			return orderedData;
+			return {
+				data: orderedData,
+				total: orderedData.length
+			};
 		}
 
 		protected render() {
