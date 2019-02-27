@@ -110,9 +110,9 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 			let paginationIds: string[] = [];
 			if (options) {
 				let pagination =
-					this._store.get(this._store.path(pathPrefix, 'pagination', `size-${options.size}`)) || {};
+					this._store.get(this._store.path(pathPrefix, 'pagination', `size-${options.size}`));
 				if (pagination) {
-					paginationIds = pagination.pages[`page-${options.offset}`];
+					paginationIds = pagination.pages[`page-${options.offset}`] || [];
 				}
 			}
 
@@ -147,12 +147,12 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 				return [];
 			}
 
+			const data = this._store.get(this._store.path(pathPrefix, 'data'));
 			if (paginationIds.length) {
 				return paginationIds.map((id) => data[id]);
 			}
 
 			const itemIds = this._store.get(this._store.path(pathPrefix, 'order')) || {};
-			const data = this._store.get(this._store.path(pathPrefix, 'data'));
 			const orderedData: S[] = [];
 			Object.keys(itemIds).forEach((objectKey) => {
 				itemIds[objectKey].forEach((id) => {

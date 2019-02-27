@@ -103,9 +103,9 @@ function processReadMany(
 		replace(path(metaPath, 'actions', 'read', 'many', 'loading'), loadingInitiators),
 		replace(path(metaPath, 'actions', 'read', 'many', 'completed'), completedInitiators),
 		pagination
-			? replace(path(pathPrefix, 'pagination', `size-${pagination.offset}`), {
+			? replace(path(pathPrefix, 'pagination', `size-${pagination.size}`), {
 					pages: {
-						[`size-${pagination.offset}`]: batchIds
+						[`page-${pagination.offset}`]: batchIds
 					},
 					total: result.total
 			  })

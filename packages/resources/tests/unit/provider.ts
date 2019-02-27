@@ -3,7 +3,7 @@ const { assert } = intern.getPlugin('chai');
 
 import Store from '@dojo/framework/stores/Store';
 import { registerStoreInjector } from '@dojo/framework/stores/StoreInjector';
-import provider from '../../src/provider';
+import provider, { PaginationOptions } from '../../src/provider';
 
 let store: Store;
 let registry: any;
@@ -11,6 +11,7 @@ let registry: any;
 describe('ResourceProvider', () => {
 	beforeEach(() => {
 		store = new Store();
+		(window as any).store = store;
 		registry = registerStoreInjector(store);
 	});
 
@@ -53,6 +54,59 @@ describe('ResourceProvider', () => {
 		widget.__render__();
 		assert.strictEqual(readCallCount, 1);
 		assert.strictEqual(renderCount, 3);
+	});
+
+	it('Should fetch resources for page and return them to the providers renderer', () => {
+		let readCallCount = 0;
+		let renderCount = 0;
+		const TestResourceProvider = provider({
+			idKey: 'id',
+			template: (resource: any) => {
+				return resource;
+			},
+			read: (options?: PaginationOptions) => {
+				readCallCount++;
+				if (renderCount === 1) {
+				assert.deepEqual(options, { offset: 0, size: 20 })
+				} else if (renderCount === 2) {
+					assert.deepEqual(options, { offset: 20, size: 20 })
+				}
+
+				return options!.offset === 0 ? { data: [{ id: 'a' }], success: true, total: 1 } : { data: [{ id: 'b' }], success: true, total: 1 };
+			}
+		});
+
+		const widget = new TestResourceProvider();
+		widget.registry.base = registry;
+		let pageNumber = 0;
+		widget.__setProperties__({
+			renderer: (resource) => {
+				renderCount++;
+				const result = resource.getOrRead({ offset: pageNumber * 20, size: 20 });
+				if (renderCount === 1 || renderCount === 3) {
+					assert.isEmpty(result);
+				} else if (renderCount === 2) {
+					assert.deepEqual(result, [{ id: 'a' }]);
+				} else {
+					assert.deepEqual(result, [{ id: 'b' }]);
+				}
+				return null;
+			}
+		});
+
+		widget.__render__();
+		assert.strictEqual(readCallCount, 1);
+		assert.strictEqual(renderCount, 1);
+		widget.__render__();
+		assert.strictEqual(readCallCount, 1);
+		assert.strictEqual(renderCount, 2);
+		pageNumber++;
+		widget.__render__();
+		assert.strictEqual(readCallCount, 2);
+		assert.strictEqual(renderCount, 3);
+		widget.__render__();
+		assert.strictEqual(readCallCount, 2);
+		assert.strictEqual(renderCount, 4);
 	});
 
 	it('Should default idKey to id and fetch resources', () => {
