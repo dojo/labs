@@ -34,7 +34,7 @@ export interface IsLoadingOptions {
 	global?: boolean;
 }
 
-export interface ManyResourceResponse<S> {
+export interface ManyResourceResponse<S = any> {
 	data: S[];
 	total: number;
 	success: boolean;
@@ -101,7 +101,7 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 			} else if (id) {
 				result = result || meta.items[id].read.many[statusType].indexOf(this._initiatorId) !== -1;
 			} else {
-				result = result || meta.actions.read.many[statusType].indexOf(this._initiatorId) !== -1;;
+				result = result || meta.actions.read.many[statusType].indexOf(this._initiatorId) !== -1;
 			}
 
 			return result;

@@ -25,7 +25,11 @@ export interface FailedResourcePayload {
 	type: string;
 }
 
-const createCommand = createCommandFactory<ResourceState<any>>();
+export interface InitResourcePayload {
+	pathPrefix: string;
+}
+
+const createCommand = createCommandFactory<ResourceState>();
 
 function createMetaStatuses() {
 	return {
@@ -35,22 +39,24 @@ function createMetaStatuses() {
 	};
 }
 
-export const initializeResource: Command<ResourceState<any>, any> = createCommand<any>(({ get, path, at, payload }) => {
-	const { pathPrefix } = payload;
-	const resourceData = get(path(pathPrefix, 'meta', 'actions'));
-	if (resourceData) {
-		return [];
+export const initializeResource: Command<ResourceState, InitResourcePayload> = createCommand<InitResourcePayload>(
+	({ get, path, at, payload }) => {
+		const { pathPrefix } = payload;
+		const resourceData = get(path(pathPrefix, 'meta', 'actions'));
+		if (resourceData) {
+			return [];
+		}
+		return [
+			replace(path(pathPrefix, 'meta', 'actions'), {
+				read: {
+					many: createMetaStatuses()
+				}
+			})
+		];
 	}
-	return [
-		replace(path(pathPrefix, 'meta', 'actions'), {
-			read: {
-				many: createMetaStatuses()
-			}
-		})
-	];
-});
+);
 
-export const beforeReadMany: Command<ResourceState<any>, ReadManyPayload> = createCommand<ReadManyPayload>(
+export const beforeReadMany: Command<ResourceState, ReadManyPayload> = createCommand<ReadManyPayload>(
 	({ get, path, at, payload }) => {
 		const { pathPrefix, initiator } = payload;
 		const metaPath = path(pathPrefix, 'meta');
@@ -62,10 +68,10 @@ export const beforeReadMany: Command<ResourceState<any>, ReadManyPayload> = crea
 );
 
 function processReadMany(
-	result: ManyResourceResponse<any>,
+	result: ManyResourceResponse,
 	payload: ReadManyPayload,
-	path: StatePaths<ResourceState<any>>,
-	get: <S>(path: Path<ResourceState<any>, S>) => S
+	path: StatePaths<ResourceState>,
+	get: <S>(path: Path<ResourceState, S>) => S
 ) {
 	const { idKey, config, pathPrefix, batchId, initiator, pagination } = payload;
 	const metaPath = path(pathPrefix, 'meta');
@@ -107,7 +113,7 @@ function processReadMany(
 	];
 }
 
-export const readMany: Command<ResourceState<any>, ReadManyPayload> = createCommand<ReadManyPayload>(
+export const readMany: Command<ResourceState, ReadManyPayload> = createCommand<ReadManyPayload>(
 	({ path, payload, get }) => {
 		const {
 			config: { read },
@@ -123,7 +129,7 @@ export const readMany: Command<ResourceState<any>, ReadManyPayload> = createComm
 	}
 );
 
-export const failedResource: Command<ResourceState<any>, FailedResourcePayload> = createCommand<FailedResourcePayload>(
+export const failedResource: Command<ResourceState, FailedResourcePayload> = createCommand<FailedResourcePayload>(
 	({ path, payload, get }) => {
 		const { pathPrefix, type, action, initiator } = payload;
 		const actionsPath = path(pathPrefix, 'meta', 'actions');

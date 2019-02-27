@@ -49,7 +49,7 @@ export interface ResourceMetaState {
 	actions: ResourceMetaActions;
 }
 
-export interface ResourceState<S> {
+export interface ResourceState<S = any> {
 	[index: string]: {
 		data: ResourceData<S>;
 		idMap: ResourceIdMap;
