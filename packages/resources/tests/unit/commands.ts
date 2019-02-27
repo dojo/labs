@@ -13,9 +13,7 @@ describe('commands', () => {
 	it('beforeReadMany', () => {
 		const { at, path, get } = store;
 		const operations = beforeReadMany({ at, get, path, payload: { pathPrefix: 'test', initiator: 'init' } as any });
-		assert.deepEqual(operations, [
-			replace(path(metaPath, 'actions', 'read', 'many', 'loading'), ['init'])
-		]);
+		assert.deepEqual(operations, [replace(path(metaPath, 'actions', 'read', 'many', 'loading'), ['init'])]);
 	});
 
 	it('readMany - no results', async () => {
@@ -65,18 +63,10 @@ describe('commands', () => {
 		assert.deepEqual(operations, [
 			replace(path('test', 'idMap', 'a'), aSynthId),
 			replace(path('test', 'data', aSynthId), { id: 'a' }),
-			replace(path(metaPath, 'items', aSynthId), {
-				status: 'completed',
-				action: 'read',
-				log: {}
-			}),
+			replace(path(metaPath, 'items', aSynthId, 'read', 'completed'), [ 'init' ]),
 			replace(path('test', 'idMap', 'b'), bSynthId),
 			replace(path('test', 'data', bSynthId), { id: 'b' }),
-			replace(path(metaPath, 'items', bSynthId), {
-				status: 'completed',
-				action: 'read',
-				log: {}
-			}),
+			replace(path(metaPath, 'items', bSynthId, 'read', 'completed'), [ 'init' ]),
 			replace(path(metaPath, 'actions', 'read', 'many', 'loading'), []),
 			replace(path(metaPath, 'actions', 'read', 'many', 'completed'), ['init']),
 			replace(path('test', 'order', 'batch-Id'), [aSynthId, bSynthId])

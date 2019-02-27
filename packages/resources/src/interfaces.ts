@@ -1,5 +1,3 @@
-import { Status, Action } from './provider';
-
 export interface ResourceData<S> {
 	[index: string]: S;
 }
@@ -30,26 +28,15 @@ export interface ResourceMetaActionStatus {
 }
 
 export interface ResourceMetaActionType {
-	one: ResourceMetaActionStatus;
 	many: ResourceMetaActionStatus;
 }
 
 export interface ResourceMetaActions {
 	read: ResourceMetaActionType;
-	create: ResourceMetaActionType;
-	update: ResourceMetaActionType;
-	remove: ResourceMetaActionType;
 }
 
 export interface ResourceMetaItem {
-	status: Status;
-	action: Action;
-	log: {
-		[index: string]: {
-			result: any;
-			action: string;
-		};
-	};
+	read: ResourceMetaActionStatus;
 }
 
 export interface ResourceMetaItems {
@@ -63,7 +50,6 @@ export interface ResourceMetaState {
 }
 
 export interface ResourceState<S> {
-	'resource-log': any;
 	[index: string]: {
 		data: ResourceData<S>;
 		idMap: ResourceIdMap;
@@ -126,40 +112,30 @@ export interface ResourceState<S> {
 // 		},
 // 		items: {
 // 			'1': {
+//				log: {
+//					action-id: {
+//						result: {}
+//					}
+//				},
 //				create: {
 // 					'loading': [ 'initiator-id' ],
 // 					'failed': [ 'initiator-id' ],
 // 					'completed': [ 'initiator-id' ]
-//					'action-id': {
-//						'result': {}
-//					}
 //				},
 //				update: {
 // 					'loading': [ 'initiator-id' ],
 // 					'failed': [ 'initiator-id' ],
 // 					'completed': [ 'initiator-id' ]
-//					'action-id': {
-//						'status': 'loading',
-//						'result': {}
-//					}
 //				},
 //				remove: {
 // 					'loading': [ 'initiator-id' ],
 // 					'failed': [ 'initiator-id' ],
 // 					'completed': [ 'initiator-id' ]
-//					'action-id': {
-//						'status': 'loading',
-//						'result': {}
-//					}
 //				},
 //				read: {
 // 					'loading': [ 'initiator-id' ],
 // 					'failed': [ 'initiator-id' ],
 // 					'completed': [ 'initiator-id' ]
-//					'action-id': {
-//						'status': 'loading',
-//						'result': {}
-//					}
 //				}
 // 			}
 // 		}

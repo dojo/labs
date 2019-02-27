@@ -19,12 +19,36 @@ export interface ReadManyPayload {
 }
 
 export interface FailedResourcePayload {
+	initiator: string;
 	pathPrefix: string;
 	action: string;
 	type: string;
 }
 
 const createCommand = createCommandFactory<ResourceState<any>>();
+
+function createMetaStatuses() {
+	return {
+		loading: [],
+		failed: [],
+		completed: []
+	};
+}
+
+export const initializeResource: Command<ResourceState<any>, any> = createCommand<any>(({ get, path, at, payload }) => {
+	const { pathPrefix } = payload;
+	const resourceData = get(path(pathPrefix, 'meta', 'actions'));
+	if (resourceData) {
+		return [];
+	}
+	return [
+		replace(path(pathPrefix, 'meta', 'actions'), {
+			read: {
+				many: createMetaStatuses()
+			}
+		})
+	];
+});
 
 export const beforeReadMany: Command<ResourceState<any>, ReadManyPayload> = createCommand<ReadManyPayload>(
 	({ get, path, at, payload }) => {
@@ -58,9 +82,7 @@ function processReadMany(
 		batchIds.push(syntheticId);
 		operations.push(replace(path(pathPrefix, 'idMap', item[idKey]), syntheticId));
 		operations.push(replace(path(pathPrefix, 'data', syntheticId), template(item)));
-		operations.push(
-			replace(path(metaPath, 'items', syntheticId), { status: 'completed', action: 'read', log: {} })
-		);
+		operations.push(replace(path(metaPath, 'items', syntheticId, 'read', 'completed'), [initiator]));
 	});
 
 	let loadingInitiators = get(path(metaPath, 'actions', 'read', 'many', 'loading')) || [];
@@ -103,19 +125,19 @@ export const readMany: Command<ResourceState<any>, ReadManyPayload> = createComm
 
 export const failedResource: Command<ResourceState<any>, FailedResourcePayload> = createCommand<FailedResourcePayload>(
 	({ path, payload, get }) => {
-		const { pathPrefix, type, action, initiator }: any = payload;
-		const metaPath = path(pathPrefix, 'meta');
+		const { pathPrefix, type, action, initiator } = payload;
+		const actionsPath = path(pathPrefix, 'meta', 'actions');
 
-		let failedInitiators = get(path(metaPath, 'actions', 'read', 'many', 'failed')) || [];
-		let loadingInitiators = get(path(metaPath, 'actions', 'read', 'many', 'completed')) || [];
+		let failedInitiators = get(path(actionsPath, 'read', 'many', 'failed')) || [];
+		let loadingInitiators = get(path(actionsPath, 'read', 'many', 'completed')) || [];
 		loadingInitiators = [...loadingInitiators];
 		const index = loadingInitiators.indexOf(initiator);
 		loadingInitiators.splice(index, 1);
 		failedInitiators.push(initiator);
 
 		return [
-			replace(path(metaPath, 'actions', action, type, 'loading'), loadingInitiators),
-			replace(path(metaPath, 'actions', action, type, 'failed'), failedInitiators)
+			replace(path(actionsPath, action as any, type, 'loading'), loadingInitiators),
+			replace(path(actionsPath, action as any, type, 'failed'), failedInitiators)
 		];
 	}
 );
