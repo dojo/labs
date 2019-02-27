@@ -20,7 +20,6 @@ export interface PaginationOptions {
 export interface StatusOptions {
 	action?: Action;
 	type?: ActionType;
-	id?: string;
 }
 
 export interface Resource<S> {
@@ -81,25 +80,13 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 		private _getOrReadHandle: Handle | undefined;
 
 		private _getStatus(options: StatusOptions = {}, statusType: string) {
-			const { id, action, type } = options;
+			const { action, type } = options;
 			const meta = this._store.get(this._store.path(pathPrefix, 'meta')) as any;
 			let result = false;
-			if (id && action && type) {
-				if (meta.items[id] && meta.items[id][action] && meta.items[id][action][type]) {
-					result = result || meta.items[id][action][type][statusType].indexOf(this._initiatorId) !== -1;
-				}
-			} else if (id && action) {
-				if (meta.items[id] && meta.items[id][action]) {
-					result = result || meta.items[id][action].many[statusType].indexOf(this._initiatorId) !== -1;
-				}
-			} else if (action && type) {
-				if (meta.actions[action] && meta.actions[action][type]) {
-					result = result || meta.actions[action][type][statusType].indexOf(this._initiatorId) !== -1;
-				}
+			if (action && type) {
+				result = result || meta.actions[action][type][statusType].indexOf(this._initiatorId) !== -1;
 			} else if (action) {
 				result = result || meta.actions[action].many[statusType].indexOf(this._initiatorId) !== -1;
-			} else if (id) {
-				result = result || meta.items[id].read.many[statusType].indexOf(this._initiatorId) !== -1;
 			} else {
 				result = result || meta.actions.read.many[statusType].indexOf(this._initiatorId) !== -1;
 			}
@@ -107,15 +94,15 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 			return result;
 		}
 
-		private _isLoading(options: StatusOptions, global = false): boolean {
+		private _isLoading(options: StatusOptions): boolean {
 			return this._getStatus(options, 'loading');
 		}
 
-		private _isCompleted(options: StatusOptions, global = false): boolean {
+		private _isCompleted(options: StatusOptions): boolean {
 			return this._getStatus(options, 'completed');
 		}
 
-		private _isFailed(options: StatusOptions, global = false): boolean {
+		private _isFailed(options: StatusOptions): boolean {
 			return this._getStatus(options, 'failed');
 		}
 
@@ -192,10 +179,10 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 				getOrRead: (pagination?: PaginationOptions) => {
 					return this._getOrRead(pagination);
 				},
-				isFailed: (options: StatusOptions = {}) => {
+				isFailed: (options: StatusOptions) => {
 					return this._isFailed(options);
 				},
-				isLoading: (options: StatusOptions = {}) => {
+				isLoading: (options: StatusOptions) => {
 					return this._isLoading(options);
 				}
 			});

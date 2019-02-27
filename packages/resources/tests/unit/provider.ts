@@ -156,7 +156,7 @@ describe('ResourceProvider', () => {
 		const widgetOne = new TestResourceProvider();
 		widgetOne.registry.base = registry;
 		widgetOne.__setProperties__({
-			renderer: (resource: any) => {
+			renderer: (resource) => {
 				resource.getOrRead();
 				return null;
 			}
@@ -186,10 +186,10 @@ describe('ResourceProvider', () => {
 			}
 		});
 
-		const widgetOne: any = new TestResourceProvider();
+		const widgetOne = new TestResourceProvider();
 		widgetOne.registry.base = registry;
 		widgetOne.__setProperties__({
-			renderer: (resource: any) => {
+			renderer: (resource) => {
 				resource.getOrRead();
 				return null;
 			}
@@ -199,5 +199,165 @@ describe('ResourceProvider', () => {
 		const metaPath = store.path(pathPrefix, 'meta');
 		const status = store.get(store.path(metaPath, 'actions', 'read', 'many', 'failed'));
 		assert.lengthOf(status, 1);
+	});
+
+	it('isFailed should return true the action has failed', () => {
+		const TestResourceProvider = provider({
+			idKey: 'id',
+			template: (resource: any) => {
+				return resource;
+			},
+			read: () => {
+				throw new Error('test error');
+			}
+		});
+
+		const widgetOne = new TestResourceProvider();
+		widgetOne.registry.base = registry;
+		widgetOne.__setProperties__({
+			renderer: (resource) => {
+				resource.getOrRead();
+				const failed = resource.isFailed({ action: 'read' });
+				assert.isTrue(failed);
+				return null;
+			}
+		});
+		widgetOne.__render__();
+
+	});
+
+	it('isFailed should return true the action and type has failed', () => {
+		const TestResourceProvider = provider({
+			idKey: 'id',
+			template: (resource: any) => {
+				return resource;
+			},
+			read: () => {
+				throw new Error('test error');
+			}
+		});
+
+		const widgetOne = new TestResourceProvider();
+		widgetOne.registry.base = registry;
+		widgetOne.__setProperties__({
+			renderer: (resource) => {
+				resource.getOrRead();
+				const failed = resource.isFailed({ action: 'read', type: 'many'});
+				assert.isTrue(failed);
+				return null;
+			}
+		});
+		widgetOne.__render__();
+	});
+
+	it('isFailed should return true if any action has failed', () => {
+		const TestResourceProvider = provider({
+			idKey: 'id',
+			template: (resource: any) => {
+				return resource;
+			},
+			read: () => {
+				throw new Error('test error');
+			}
+		});
+
+		const widgetOne = new TestResourceProvider();
+		widgetOne.registry.base = registry;
+		widgetOne.__setProperties__({
+			renderer: (resource) => {
+				resource.getOrRead();
+				const failed = resource.isFailed();
+				assert.isTrue(failed);
+				return null;
+			}
+		});
+		widgetOne.__render__();
+	});
+
+	it('isLoading should return true the action has loading', () => {
+		let promise: any;
+		const TestResourceProvider = provider({
+			idKey: 'id',
+			template: (resource: any) => {
+				return resource;
+			},
+			read: () => {
+				promise = new Promise((resolve) => {
+					resolve({ data: [{ id: 'a' }], success: true, total: 1 });
+				})
+				return promise;
+			}
+		});
+
+		const widgetOne = new TestResourceProvider();
+		widgetOne.registry.base = registry;
+		widgetOne.__setProperties__({
+			renderer: (resource) => {
+				resource.getOrRead();
+				const loading = resource.isLoading({ action: 'read' });
+				assert.isTrue(loading);
+				return null;
+			}
+		});
+		widgetOne.__render__();
+		return promise;
+	});
+
+	it('isLoading should return true the action and type has loading', () => {
+		let promise: any;
+		const TestResourceProvider = provider({
+			idKey: 'id',
+			template: (resource: any) => {
+				return resource;
+			},
+			read: () => {
+				promise = new Promise((resolve) => {
+					resolve({ data: [{ id: 'a' }], success: true, total: 1 });
+				})
+				return promise;
+			}
+		});
+
+		const widgetOne = new TestResourceProvider();
+		widgetOne.registry.base = registry;
+		widgetOne.__setProperties__({
+			renderer: (resource) => {
+				resource.getOrRead();
+				const loading = resource.isLoading({ action: 'read', type: 'many' });
+				assert.isTrue(loading);
+				return null;
+			}
+		});
+		widgetOne.__render__();
+		return promise;
+	});
+
+	it('isLoading should return true if any action has loading', () => {
+		let promise: any;
+		const TestResourceProvider = provider({
+			idKey: 'id',
+			template: (resource: any) => {
+				return resource;
+			},
+			read: () => {
+				promise = new Promise((resolve) => {
+					resolve({ data: [{ id: 'a' }], success: true, total: 1 });
+				})
+				return promise;
+			}
+		});
+
+		const widgetOne = new TestResourceProvider();
+		widgetOne.registry.base = registry;
+		widgetOne.__setProperties__({
+			renderer: (resource) => {
+				resource.getOrRead();
+				const loading = resource.isLoading();
+				assert.isTrue(loading);
+				return null;
+			}
+		});
+		widgetOne.__render__();
+		return promise;
 	});
 });
