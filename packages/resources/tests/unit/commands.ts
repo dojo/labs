@@ -22,7 +22,7 @@ describe('commands', () => {
 			pathPrefix: 'test',
 			idKey: 'id',
 			config: {
-				template: () => { },
+				template: () => {},
 				read: () => {
 					return { data: [] as string[], total: 0, success: true };
 				}
@@ -63,18 +63,14 @@ describe('commands', () => {
 			replace(path(metaPath, 'items'), {
 				[aSynthId]: {
 					read: {
-						completed: [
-							'init'
-						],
+						completed: ['init'],
 						failed: [],
 						loading: []
 					}
 				},
 				[bSynthId]: {
 					read: {
-						completed: [
-							'init'
-						],
+						completed: ['init'],
 						failed: [],
 						loading: []
 					}
@@ -100,7 +96,7 @@ describe('commands', () => {
 			pathPrefix: 'test',
 			idKey: 'id',
 			config: {
-				template: () => { },
+				template: () => {},
 				read: async () => {
 					return { data: [], success: false };
 				}

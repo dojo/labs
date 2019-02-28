@@ -134,7 +134,6 @@ function processReadMany(
 			};
 		});
 
-
 		let currentItems = get(path(metaPath, 'items'));
 		let currentData = get(path(pathPrefix, 'data'));
 		let currentIdMap = get(path(pathPrefix, 'idMap'));
