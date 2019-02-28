@@ -5,8 +5,9 @@ import Store from '@dojo/framework/stores/Store';
 import { beforeReadMany, readMany, prevPage, nextPage, gotoPage } from '../../src/commands';
 import { ReplacePatchOperation } from '@dojo/framework/stores/state/Patch';
 import { replace } from '@dojo/framework/stores/state/operations';
+import { ResourceState } from '../../src/interfaces';
 
-const store = new Store();
+const store = new Store<ResourceState<any>>();
 const metaPath = store.path('test', 'meta');
 
 describe('commands', () => {
@@ -36,7 +37,7 @@ describe('commands', () => {
 		assert.deepEqual(operations, [
 			replace(path(metaPath, 'actions', 'read', 'many', 'loading'), []),
 			replace(path(metaPath, 'actions', 'read', 'many', 'completed'), ['init']),
-			replace(path('test', 'order', 'batchId'), [])
+			replace(path('test', 'order'), { batchId: [] })
 		]);
 	});
 
@@ -86,7 +87,7 @@ describe('commands', () => {
 			}),
 			replace(path(metaPath, 'actions', 'read', 'many', 'loading'), []),
 			replace(path(metaPath, 'actions', 'read', 'many', 'completed'), ['init']),
-			replace(path('test', 'order', 'batch-Id'), [aSynthId, bSynthId])
+			replace(path('test', 'order'), { 'batch-Id': [aSynthId, bSynthId] })
 		]);
 	});
 
@@ -116,7 +117,7 @@ describe('commands', () => {
 	it('Should return operations update pagination to previous page', () => {
 		const { at, path, get } = store;
 		store.apply([
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 50,
 				size: 10,
 				start: 1,
@@ -129,7 +130,7 @@ describe('commands', () => {
 		};
 		const operations = prevPage({ at, get, path, payload });
 		assert.deepEqual(operations, [
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 40,
 				size: 10,
 				start: 1,
@@ -141,7 +142,7 @@ describe('commands', () => {
 	it('Should return operations update pagination to first page if the previous page would be negative', () => {
 		const { at, path, get } = store;
 		store.apply([
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 0,
 				size: 10,
 				start: 1,
@@ -154,7 +155,7 @@ describe('commands', () => {
 		};
 		const operations = prevPage({ at, get, path, payload });
 		assert.deepEqual(operations, [
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 0,
 				size: 10,
 				start: 1,
@@ -166,7 +167,7 @@ describe('commands', () => {
 	it('Should return operations update pagination meta to next page', () => {
 		const { at, path, get } = store;
 		store.apply([
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 50,
 				size: 10,
 				start: 1,
@@ -179,7 +180,7 @@ describe('commands', () => {
 		};
 		const operations = nextPage({ at, get, path, payload });
 		assert.deepEqual(operations, [
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 60,
 				size: 10,
 				start: 1,
@@ -191,7 +192,7 @@ describe('commands', () => {
 	it('Should update to next page with remainder', () => {
 		const { at, path, get } = store;
 		store.apply([
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 90,
 				size: 10,
 				start: 1,
@@ -204,7 +205,7 @@ describe('commands', () => {
 		};
 		const operations = nextPage({ at, get, path, payload });
 		assert.deepEqual(operations, [
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 100,
 				size: 10,
 				start: 1,
@@ -216,7 +217,7 @@ describe('commands', () => {
 	it('Should return operations update pagination to last page if the next page would result in a page greater than available', () => {
 		const { at, path, get } = store;
 		store.apply([
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 100,
 				size: 10,
 				start: 1,
@@ -229,7 +230,7 @@ describe('commands', () => {
 		};
 		let operations = nextPage({ at, get, path, payload });
 		assert.deepEqual(operations, [
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 100,
 				size: 10,
 				start: 1,
@@ -237,7 +238,7 @@ describe('commands', () => {
 			})
 		]);
 		store.apply([
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 90,
 				size: 10,
 				start: 1,
@@ -246,7 +247,7 @@ describe('commands', () => {
 		]);
 		operations = nextPage({ at, get, path, payload });
 		assert.deepEqual(operations, [
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 90,
 				size: 10,
 				start: 1,
@@ -258,7 +259,7 @@ describe('commands', () => {
 	it('Should return operations to update pagination data to requested page', () => {
 		const { at, path, get } = store;
 		store.apply([
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 100,
 				size: 10,
 				start: 1,
@@ -272,7 +273,7 @@ describe('commands', () => {
 		};
 		const operations = gotoPage({ at, get, path, payload });
 		assert.deepEqual(operations, [
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 40,
 				size: 10,
 				start: 1,
@@ -284,7 +285,7 @@ describe('commands', () => {
 	it('Should return operations to update pagination data to first page if a negative page is provided', () => {
 		const { at, path, get } = store;
 		store.apply([
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 100,
 				size: 10,
 				start: 1,
@@ -298,7 +299,7 @@ describe('commands', () => {
 		};
 		const operations = gotoPage({ at, get, path, payload });
 		assert.deepEqual(operations, [
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 0,
 				size: 10,
 				start: 1,
@@ -309,7 +310,7 @@ describe('commands', () => {
 	it('Should return operations to update pagination data to last page if page requested is greater than the page count', () => {
 		const { at, path, get } = store;
 		store.apply([
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 100,
 				size: 10,
 				start: 1,
@@ -323,7 +324,7 @@ describe('commands', () => {
 		};
 		let operations = gotoPage({ at, get, path, payload });
 		assert.deepEqual(operations, [
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 100,
 				size: 10,
 				start: 1,
@@ -331,7 +332,7 @@ describe('commands', () => {
 			})
 		]);
 		store.apply([
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 100,
 				size: 10,
 				start: 1,
@@ -340,7 +341,7 @@ describe('commands', () => {
 		]);
 		operations = gotoPage({ at, get, path, payload });
 		assert.deepEqual(operations, [
-			replace(store.path('test', 'meta', 'pagination', 'init'), {
+			replace(store.path('test', 'meta', 'pagination', 'current', 'init'), {
 				offset: 90,
 				size: 10,
 				start: 1,

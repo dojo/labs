@@ -51,7 +51,10 @@ export interface PaginationDetails {
 }
 
 export interface PaginationMeta {
-	[index: string]: PaginationDetails;
+	loadedPages: string[];
+	current: {
+		[index: string]: PaginationDetails;
+	};
 }
 
 export interface ResourceMetaState {

@@ -83,18 +83,22 @@ export const beforeReadMany: Command<ResourceState, ReadManyPayload> = createCom
 		const { pathPrefix, initiator, pagination } = payload;
 		const metaPath = path(pathPrefix, 'meta');
 
-		const initiators = get(path(metaPath, 'actions', 'read', 'many', 'loading')) || [];
-		initiators.push(initiator);
+		let initiators = get(path(metaPath, 'actions', 'read', 'many', 'loading')) || [];
+		initiators = [...initiators, initiator];
 		const loadingOp = replace(path(metaPath, 'actions', 'read', 'many', 'loading'), initiators);
-		const paginationMeta = get(path(metaPath, 'pagination', initiator));
+		const paginationMeta = get(path(metaPath, 'pagination', 'current', initiator));
 		if (pagination) {
-			return [
-				loadingOp,
-				replace(path(metaPath, 'pagination', initiator), {
-					...paginationMeta,
-					...pagination
-				})
-			];
+			const pageData = get(
+				path(pathPrefix, 'pagination', `size-${pagination.size}`, 'pages', `page-${pagination.offset}`)
+			);
+			const paginationOperation = replace(path(metaPath, 'pagination', 'current', initiator), {
+				...paginationMeta,
+				...pagination
+			});
+			if (pageData) {
+				return [paginationOperation];
+			}
+			return [loadingOp, paginationOperation];
 		}
 		return [loadingOp];
 	}
@@ -159,15 +163,20 @@ function processReadMany(
 
 	if (pagination) {
 		const { offset, size } = pagination;
+		const currentPages = get(path(pathPrefix, 'meta', 'pagination', 'loadedPages')) || [];
 		return [
 			...operations,
+			replace(path(pathPrefix, 'meta', 'pagination', 'loadedPages'), [
+				...currentPages,
+				`size-${size}-offset-${offset}`
+			]),
 			replace(path(path(pathPrefix, 'pagination'), `size-${size}`, 'pages', `page-${offset}`), batchIds),
 			replace(path(path(pathPrefix, 'pagination'), `size-${size}`, 'total'), result.total),
-			replace(path(pathPrefix, 'meta', 'pagination', initiator, 'total'), result.total)
+			replace(path(path(pathPrefix, 'meta'), 'pagination', 'current', initiator, 'total'), result.total)
 		];
 	}
 
-	return [...operations, replace(path(pathPrefix, 'order', batchId), batchIds)];
+	return [...operations, replace(path(pathPrefix, 'order'), { [batchId]: batchIds })];
 }
 
 export const readMany: Command<ResourceState, ReadManyPayload> = createCommand<ReadManyPayload>(
@@ -189,7 +198,7 @@ export const readMany: Command<ResourceState, ReadManyPayload> = createCommand<R
 export const nextPage: Command<ResourceState, NextPagePayload> = createCommand<NextPagePayload>(
 	({ path, payload, get }) => {
 		const { pathPrefix, initiator } = payload;
-		const currentPagination = get(path(pathPrefix, 'meta', 'pagination', initiator));
+		const currentPagination = get(path(pathPrefix, 'meta', 'pagination', 'current', initiator));
 		let newOffset = currentPagination.offset + currentPagination.size;
 		if (newOffset >= currentPagination.total) {
 			const remainder = currentPagination.total % currentPagination.size || currentPagination.size;
@@ -197,7 +206,7 @@ export const nextPage: Command<ResourceState, NextPagePayload> = createCommand<N
 		}
 
 		return [
-			replace(path(pathPrefix, 'meta', 'pagination', initiator), {
+			replace(path(pathPrefix, 'meta', 'pagination', 'current', initiator), {
 				offset: newOffset,
 				size: currentPagination.size,
 				total: currentPagination.total,
@@ -210,14 +219,14 @@ export const nextPage: Command<ResourceState, NextPagePayload> = createCommand<N
 export const prevPage: Command<ResourceState, PrevPagePayload> = createCommand<PrevPagePayload>(
 	({ path, payload, get }) => {
 		const { pathPrefix, initiator } = payload;
-		const currentPagination = get(path(pathPrefix, 'meta', 'pagination', initiator));
+		const currentPagination = get(path(pathPrefix, 'meta', 'pagination', 'current', initiator));
 		const newOffset =
 			currentPagination.offset - currentPagination.size < 0
 				? 0
 				: currentPagination.offset - currentPagination.size;
 
 		return [
-			replace(path(pathPrefix, 'meta', 'pagination', initiator), {
+			replace(path(pathPrefix, 'meta', 'pagination', 'current', initiator), {
 				offset: newOffset,
 				size: currentPagination.size,
 				total: currentPagination.total,
@@ -230,7 +239,7 @@ export const prevPage: Command<ResourceState, PrevPagePayload> = createCommand<P
 export const gotoPage: Command<ResourceState, GotoPagePayload> = createCommand<GotoPagePayload>(
 	({ path, payload, get }) => {
 		const { pathPrefix, initiator, page } = payload;
-		const currentPagination = get(path(pathPrefix, 'meta', 'pagination', initiator));
+		const currentPagination = get(path(pathPrefix, 'meta', 'pagination', 'current', initiator));
 		let newOffset = (page - 1) * currentPagination.size;
 		if (newOffset < 0) {
 			newOffset = 0;
@@ -239,7 +248,7 @@ export const gotoPage: Command<ResourceState, GotoPagePayload> = createCommand<G
 			newOffset = currentPagination.total - remainder;
 		}
 		return [
-			replace(path(pathPrefix, 'meta', 'pagination', initiator), {
+			replace(path(pathPrefix, 'meta', 'pagination', 'current', initiator), {
 				offset: newOffset,
 				size: currentPagination.size,
 				total: currentPagination.total,
@@ -248,6 +257,12 @@ export const gotoPage: Command<ResourceState, GotoPagePayload> = createCommand<G
 		];
 	}
 );
+
+export const invalidatePagination: Command<ResourceState, any> = createCommand<any>(({ path, payload, get }) => {
+	const { pathPrefix } = payload;
+
+	return [replace(path(pathPrefix, 'meta', 'pagination', 'loadedPages'), [])];
+});
 
 export const failedResource: Command<ResourceState, FailedResourcePayload> = createCommand<FailedResourcePayload>(
 	({ path, payload, get }) => {
