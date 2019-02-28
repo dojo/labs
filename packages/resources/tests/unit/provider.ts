@@ -32,11 +32,13 @@ describe('ResourceProvider', () => {
 		const widget = new TestResourceProvider();
 		widget.registry.base = registry;
 		widget.__setProperties__({
-			renderer: (resource) => {
+			renderer: ({ getOrRead, page: { current, total } }) => {
 				renderCount++;
-				const result = resource.getOrRead();
+				const result = getOrRead();
+				assert.isUndefined(current());
+				assert.isUndefined(total());
 				if (renderCount === 1) {
-					assert.isEmpty(result);
+					assert.isUndefined(result);
 				} else {
 					assert.deepEqual(result, [{ id: 'a' }]);
 				}
@@ -67,24 +69,80 @@ describe('ResourceProvider', () => {
 			read: (options?: PaginationOptions) => {
 				readCallCount++;
 				if (renderCount === 1) {
-				assert.deepEqual(options, { offset: 0, size: 20 })
+					assert.deepEqual(options, { offset: 0, size: 20 });
 				} else if (renderCount === 2) {
-					assert.deepEqual(options, { offset: 20, size: 20 })
+					assert.deepEqual(options, { offset: 20, size: 20 });
 				}
 
-				return options!.offset === 0 ? { data: [{ id: 'a' }], success: true, total: 1 } : { data: [{ id: 'b' }], success: true, total: 1 };
+				return options!.offset === 0
+					? { data: [{ id: 'a' }], success: true, total: 40 }
+					: { data: [{ id: 'b' }], success: true, total: 40 };
 			}
 		});
 
 		const widget = new TestResourceProvider();
 		widget.registry.base = registry;
-		let pageNumber = 0;
+		let pageNumber = 1;
 		widget.__setProperties__({
-			renderer: (resource) => {
+			renderer: ({ getOrRead, page: { current, total } }) => {
 				renderCount++;
-				const result = resource.getOrRead({ offset: pageNumber * 20, size: 20 });
+				const result = getOrRead({ start: pageNumber, size: 20 });
 				if (renderCount === 1 || renderCount === 3) {
-					assert.isEmpty(result);
+					assert.isUndefined(result);
+				} else if (renderCount === 2) {
+					assert.strictEqual(total(), 2);
+					assert.strictEqual(current(), 1);
+					assert.deepEqual(result, [{ id: 'a' }]);
+				} else {
+					assert.strictEqual(total(), 2);
+					assert.strictEqual(current(), 2);
+					assert.deepEqual(result, [{ id: 'b' }]);
+				}
+				return null;
+			}
+		});
+
+		widget.__render__();
+		assert.strictEqual(readCallCount, 1);
+		assert.strictEqual(renderCount, 1);
+		widget.__render__();
+		assert.strictEqual(readCallCount, 1);
+		assert.strictEqual(renderCount, 2);
+		pageNumber++;
+		widget.__render__();
+		assert.strictEqual(readCallCount, 2);
+		assert.strictEqual(renderCount, 3);
+		widget.__render__();
+		assert.strictEqual(readCallCount, 2);
+		assert.strictEqual(renderCount, 4);
+	});
+
+	it('Calling next should cause the next page to be fetched', () => {
+		let readCallCount = 0;
+		let renderCount = 0;
+		let nextFunction: any;
+		const TestResourceProvider = provider({
+			idKey: 'id',
+			template: (resource: any) => {
+				return resource;
+			},
+			read: (options?: PaginationOptions) => {
+				readCallCount++;
+				return options!.offset === 0
+					? { data: [{ id: 'a' }], success: true, total: 1 }
+					: { data: [{ id: 'b' }], success: true, total: 1 };
+			}
+		});
+
+		const widget = new TestResourceProvider();
+		widget.registry.base = registry;
+		widget.__setProperties__({
+			renderer: ({ getOrRead, page: { next } }) => {
+				nextFunction = next;
+				renderCount++;
+				const result = getOrRead({ start: 1, size: 20 });
+				if (renderCount === 1 || renderCount === 3) {
+					assert.isUndefined(result);
 				} else if (renderCount === 2) {
 					assert.deepEqual(result, [{ id: 'a' }]);
 				} else {
@@ -100,7 +158,107 @@ describe('ResourceProvider', () => {
 		widget.__render__();
 		assert.strictEqual(readCallCount, 1);
 		assert.strictEqual(renderCount, 2);
-		pageNumber++;
+		nextFunction();
+		widget.__render__();
+		assert.strictEqual(readCallCount, 2);
+		assert.strictEqual(renderCount, 3);
+		widget.__render__();
+		assert.strictEqual(readCallCount, 2);
+		assert.strictEqual(renderCount, 4);
+	});
+
+	it('Calling previous should cause the previous page to be fetched', () => {
+		let readCallCount = 0;
+		let renderCount = 0;
+		let prevFunction: any;
+		const TestResourceProvider = provider({
+			idKey: 'id',
+			template: (resource: any) => {
+				return resource;
+			},
+			read: (options?: PaginationOptions) => {
+				readCallCount++;
+				return options!.offset === 0
+					? { data: [{ id: 'a' }], success: true, total: 1 }
+					: { data: [{ id: 'b' }], success: true, total: 1 };
+			}
+		});
+
+		const widget = new TestResourceProvider();
+		widget.registry.base = registry;
+		widget.__setProperties__({
+			renderer: ({ getOrRead, page: { previous } }) => {
+				prevFunction = previous;
+				renderCount++;
+				const result = getOrRead({ start: 2, size: 20 });
+				if (renderCount === 1 || renderCount === 3) {
+					assert.isUndefined(result);
+				} else if (renderCount === 2) {
+					assert.deepEqual(result, [{ id: 'b' }]);
+				} else {
+					assert.deepEqual(result, [{ id: 'a' }]);
+				}
+				return null;
+			}
+		});
+
+		widget.__render__();
+		assert.strictEqual(readCallCount, 1);
+		assert.strictEqual(renderCount, 1);
+		widget.__render__();
+		assert.strictEqual(readCallCount, 1);
+		assert.strictEqual(renderCount, 2);
+		prevFunction();
+		widget.__render__();
+		assert.strictEqual(readCallCount, 2);
+		assert.strictEqual(renderCount, 3);
+		widget.__render__();
+		assert.strictEqual(readCallCount, 2);
+		assert.strictEqual(renderCount, 4);
+	});
+
+	it('Calling goto should cause the requested page to be fetched', () => {
+		let readCallCount = 0;
+		let renderCount = 0;
+		let gotoFunction: any;
+		const TestResourceProvider = provider({
+			idKey: 'id',
+			template: (resource: any) => {
+				return resource;
+			},
+			read: (options?: PaginationOptions) => {
+				readCallCount++;
+				return options!.offset === 0
+					? { data: [{ id: 'a' }], success: true, total: 1 }
+					: { data: [{ id: 'b' }], success: true, total: 1 };
+			}
+		});
+
+		const widget = new TestResourceProvider();
+		widget.registry.base = registry;
+		widget.__setProperties__({
+			renderer: ({ getOrRead, page: { goto } }) => {
+				gotoFunction = goto;
+				renderCount++;
+				const result = getOrRead({ start: 1, size: 20 });
+				if (renderCount === 1 || renderCount === 3) {
+					assert.isUndefined(result);
+				} else if (renderCount === 2) {
+					assert.deepEqual(result, [{ id: 'a' }]);
+				} else {
+					assert.deepEqual(result, [{ id: 'b' }]);
+				}
+				return null;
+			}
+		});
+
+		widget.__render__();
+		assert.strictEqual(readCallCount, 1);
+		assert.strictEqual(renderCount, 1);
+		widget.__render__();
+		assert.strictEqual(readCallCount, 1);
+		assert.strictEqual(renderCount, 2);
+		gotoFunction(2);
 		widget.__render__();
 		assert.strictEqual(readCallCount, 2);
 		assert.strictEqual(renderCount, 3);
@@ -129,7 +287,7 @@ describe('ResourceProvider', () => {
 				renderCount++;
 				const result = resource.getOrRead();
 				if (renderCount === 1) {
-					assert.isEmpty(result);
+					assert.isUndefined(result);
 				} else {
 					assert.deepEqual(result, [{ id: 'a' }]);
 				}
@@ -277,7 +435,6 @@ describe('ResourceProvider', () => {
 			}
 		});
 		widgetOne.__render__();
-
 	});
 
 	it('isFailed should return true the action and type has failed', () => {
@@ -296,7 +453,7 @@ describe('ResourceProvider', () => {
 		widgetOne.__setProperties__({
 			renderer: (resource) => {
 				resource.getOrRead();
-				const failed = resource.isFailed({ action: 'read', type: 'many'});
+				const failed = resource.isFailed({ action: 'read', type: 'many' });
 				assert.isTrue(failed);
 				return null;
 			}
@@ -338,7 +495,7 @@ describe('ResourceProvider', () => {
 			read: () => {
 				promise = new Promise((resolve) => {
 					resolve({ data: [{ id: 'a' }], success: true, total: 1 });
-				})
+				});
 				return promise;
 			}
 		});
@@ -367,7 +524,7 @@ describe('ResourceProvider', () => {
 			read: () => {
 				promise = new Promise((resolve) => {
 					resolve({ data: [{ id: 'a' }], success: true, total: 1 });
-				})
+				});
 				return promise;
 			}
 		});
@@ -396,7 +553,7 @@ describe('ResourceProvider', () => {
 			read: () => {
 				promise = new Promise((resolve) => {
 					resolve({ data: [{ id: 'a' }], success: true, total: 1 });
-				})
+				});
 				return promise;
 			}
 		});

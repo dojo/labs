@@ -4,7 +4,7 @@ import { Command, createCommandFactory } from '@dojo/framework/stores/process';
 import { replace } from '@dojo/framework/stores/state/operations';
 import { uuid } from '@dojo/framework/core/util';
 import { PatchOperation } from '@dojo/framework/stores/state/Patch';
-import { ResourceConfig, ManyResourceResponse, PaginationOptions } from './provider';
+import { ResourceConfig, ManyResourceResponse } from './provider';
 import { StatePaths, Path } from '@dojo/framework/stores/Store';
 
 export interface ReadManyPayload {
@@ -15,7 +15,10 @@ export interface ReadManyPayload {
 	action: string;
 	initiator: string;
 	type: string;
-	pagination?: PaginationOptions;
+	pagination?: {
+		offset: number;
+		size: number;
+	};
 }
 
 export interface FailedResourcePayload {
@@ -27,6 +30,22 @@ export interface FailedResourcePayload {
 
 export interface InitResourcePayload {
 	pathPrefix: string;
+}
+
+export interface PrevPagePayload {
+	pathPrefix: string;
+	initiator: string;
+}
+
+export interface NextPagePayload {
+	pathPrefix: string;
+	initiator: string;
+}
+
+export interface GotoPagePayload {
+	pathPrefix: string;
+	initiator: string;
+	page: number;
 }
 
 const createCommand = createCommandFactory<ResourceState>();
@@ -58,12 +77,16 @@ export const initializeResource: Command<ResourceState, InitResourcePayload> = c
 
 export const beforeReadMany: Command<ResourceState, ReadManyPayload> = createCommand<ReadManyPayload>(
 	({ get, path, at, payload }) => {
-		const { pathPrefix, initiator } = payload;
+		const { pathPrefix, initiator, pagination } = payload;
 		const metaPath = path(pathPrefix, 'meta');
 
 		const initiators = get(path(metaPath, 'actions', 'read', 'many', 'loading')) || [];
 		initiators.push(initiator);
-		return [replace(path(metaPath, 'actions', 'read', 'many', 'loading'), initiators)];
+		const loadingOp = replace(path(metaPath, 'actions', 'read', 'many', 'loading'), initiators);
+		if (pagination) {
+			return [loadingOp, replace(path(metaPath, 'pagination', initiator), pagination)];
+		}
+		return [loadingOp];
 	}
 );
 
@@ -82,7 +105,7 @@ function processReadMany(
 	}
 
 	const batchIds: string[] = [];
-	const operations: PatchOperation[] = [];
+	let operations: PatchOperation[] = [];
 	result.data.forEach((item: any) => {
 		const syntheticId = uuid();
 		batchIds.push(syntheticId);
@@ -98,19 +121,28 @@ function processReadMany(
 	loadingInitiators.splice(index, 1);
 	completedInitiators.push(initiator);
 
-	return [
+	operations = [
 		...operations,
 		replace(path(metaPath, 'actions', 'read', 'many', 'loading'), loadingInitiators),
-		replace(path(metaPath, 'actions', 'read', 'many', 'completed'), completedInitiators),
-		pagination
-			? replace(path(pathPrefix, 'pagination', `size-${pagination.size}`), {
-					pages: {
-						[`page-${pagination.offset}`]: batchIds
-					},
-					total: result.total
-			  })
-			: replace(path(pathPrefix, 'order', batchId), batchIds)
+		replace(path(metaPath, 'actions', 'read', 'many', 'completed'), completedInitiators)
 	];
+
+	if (pagination) {
+		const { offset, size } = pagination;
+		const paginationIds = {
+			pages: {
+				[`page-${offset}`]: batchIds
+			},
+			total: result.total
+		};
+		return [
+			...operations,
+			replace(path(pathPrefix, 'pagination', `size-${size}`), paginationIds),
+			replace(path(pathPrefix, 'meta', 'pagination', initiator, 'total'), result.total)
+		];
+	}
+
+	return [...operations, replace(path(pathPrefix, 'order', batchId), batchIds)];
 }
 
 export const readMany: Command<ResourceState, ReadManyPayload> = createCommand<ReadManyPayload>(
@@ -119,13 +151,74 @@ export const readMany: Command<ResourceState, ReadManyPayload> = createCommand<R
 			config: { read },
 			pagination
 		} = payload;
-		const result = read(pagination);
+		const result = read(pagination ? { offset: pagination.offset, size: pagination.size } : undefined);
 
 		if (isThenable(result)) {
 			return result.then((response) => processReadMany(response, payload, path, get));
 		}
 
 		return processReadMany(result, payload, path, get);
+	}
+);
+
+export const nextPage: Command<ResourceState, NextPagePayload> = createCommand<NextPagePayload>(
+	({ path, payload, get }) => {
+		const { pathPrefix, initiator } = payload;
+		const currentPagination = get(path(pathPrefix, 'meta', 'pagination', initiator));
+		const newOffset =
+			currentPagination.offset + currentPagination.size > currentPagination.total
+				? currentPagination.offset + currentPagination.size
+				: currentPagination.total - currentPagination.size;
+
+		return [
+			replace(path(pathPrefix, 'meta', 'pagination', initiator), {
+				offset: newOffset,
+				size: currentPagination.size,
+				total: currentPagination.total,
+				start: currentPagination.start
+			})
+		];
+	}
+);
+
+export const prevPage: Command<ResourceState, PrevPagePayload> = createCommand<PrevPagePayload>(
+	({ path, payload, get }) => {
+		const { pathPrefix, initiator } = payload;
+		const currentPagination = get(path(pathPrefix, 'meta', 'pagination', initiator));
+		const newOffset =
+			currentPagination.offset - currentPagination.size > 0
+				? 0
+				: currentPagination.offset - currentPagination.size;
+
+		return [
+			replace(path(pathPrefix, 'meta', 'pagination', initiator), {
+				offset: newOffset,
+				size: currentPagination.size,
+				total: currentPagination.total,
+				start: currentPagination.start
+			})
+		];
+	}
+);
+
+export const gotoPage: Command<ResourceState, GotoPagePayload> = createCommand<GotoPagePayload>(
+	({ path, payload, get }) => {
+		const { pathPrefix, initiator, page } = payload;
+		const currentPagination = get(path(pathPrefix, 'meta', 'pagination', initiator));
+		let newOffset = page * currentPagination.size;
+		if (newOffset < 0) {
+			newOffset = 0;
+		} else if (newOffset > currentPagination.total) {
+			newOffset = currentPagination.total - currentPagination.size;
+		}
+		return [
+			replace(path(pathPrefix, 'meta', 'pagination', initiator), {
+				offset: newOffset,
+				size: currentPagination.size,
+				total: currentPagination.total,
+				start: currentPagination.start
+			})
+		];
 	}
 );
 

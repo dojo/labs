@@ -43,10 +43,22 @@ export interface ResourceMetaItems {
 	[index: string]: ResourceMetaItem;
 }
 
+export interface PaginationDetails {
+	offset: number;
+	size: number;
+	total: number;
+	start: number;
+}
+
+export interface PaginationMeta {
+	[index: string]: PaginationDetails;
+}
+
 export interface ResourceMetaState {
 	status: string;
 	items: ResourceMetaItems;
 	actions: ResourceMetaActions;
+	pagination: PaginationMeta;
 }
 
 export interface ResourceState<S = any> {
@@ -84,6 +96,12 @@ export interface ResourceState<S = any> {
 //		}
 // },
 // 	meta: {
+//		pagination: {
+//			initiator: {
+//				offset: 20,
+//				size:
+//			}
+//		}
 // 		actions: {
 // 			read: {
 // 				one: {

@@ -2,7 +2,19 @@ import { uuid } from '@dojo/framework/core/util';
 import WidgetBase from '@dojo/framework/widget-core/WidgetBase';
 import { ResourceState } from './interfaces';
 import { createProcessFactoryWith, createProcess, ProcessExecutor } from '@dojo/framework/stores/process';
-import { beforeReadMany, readMany, failedResource, ReadManyPayload, initializeResource } from './commands';
+import {
+	beforeReadMany,
+	readMany,
+	failedResource,
+	ReadManyPayload,
+	initializeResource,
+	NextPagePayload,
+	PrevPagePayload,
+	GotoPagePayload,
+	prevPage,
+	nextPage,
+	gotoPage
+} from './commands';
 import { RenderResult, Constructor } from '@dojo/framework/widget-core/interfaces';
 import alwaysRender from '@dojo/framework/widget-core/decorators/alwaysRender';
 import Store from '@dojo/framework/stores/Store';
@@ -12,8 +24,8 @@ export type Status = 'failed' | 'loading' | 'completed';
 export type Action = 'read';
 export type ActionType = 'many';
 
-export interface PaginationOptions {
-	offset: number;
+export interface GetOrReadOptions {
+	start: number;
 	size: number;
 }
 
@@ -25,7 +37,14 @@ export interface StatusOptions {
 export interface Resource<S> {
 	isLoading(options?: StatusOptions): boolean;
 	isFailed(options?: StatusOptions): boolean;
-	getOrRead(options?: PaginationOptions): undefined | S[];
+	getOrRead(options?: GetOrReadOptions): undefined | S[];
+	page: {
+		next(): void;
+		previous(): void;
+		goto(page: number): void;
+		total(): undefined | number;
+		current(): undefined | number;
+	};
 }
 
 export interface IsLoadingOptions {
@@ -37,6 +56,11 @@ export interface ManyResourceResponse<S = any> {
 	data: S[];
 	total: number;
 	success: boolean;
+}
+
+export interface PaginationOptions {
+	offset: number;
+	size: number;
 }
 
 export interface ResourceRead<S> {
@@ -71,13 +95,20 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 		})
 	]);
 	const readManyProcess = createProcessWithError(`${pathPrefix}-read-many`, [beforeReadMany, readMany]);
+	const prevPageProcess = createProcessWithError(`${pathPrefix}-prev-page`, [prevPage]);
+	const nextPageProcess = createProcessWithError(`${pathPrefix}-next-page`, [nextPage]);
+	const gotoPageProcess = createProcessWithError(`${pathPrefix}-goto-page`, [gotoPage]);
 
 	@alwaysRender()
 	class ResourceProvider extends WidgetBase<ResourceProviderProperties<S>> {
 		private _initiatorId = uuid();
 		private _store: Store<ResourceState<S>>;
 		private _readManyProcess: ProcessExecutor<ResourceState<any>, ReadManyPayload, ReadManyPayload>;
+		private _nextPageProcess: ProcessExecutor<ResourceState<any>, NextPagePayload, NextPagePayload>;
+		private _prevPageProcess: ProcessExecutor<ResourceState<any>, PrevPagePayload, PrevPagePayload>;
+		private _gotoPageProcess: ProcessExecutor<ResourceState<any>, GotoPagePayload, GotoPagePayload>;
 		private _getOrReadHandle: Handle | undefined;
+		private _paginationHandle: Handle | undefined;
 
 		private _getStatus(options: StatusOptions = {}, statusType: string) {
 			const { action, type } = options;
@@ -106,18 +137,107 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 			return this._getStatus(options, 'failed');
 		}
 
-		private _getOrRead(options?: PaginationOptions): S[] {
+		private _total() {
+			const pagination = this._store.get(this._store.path(pathPrefix, 'meta', 'pagination', this._initiatorId));
+			if (pagination) {
+				return Math.ceil(pagination.total / pagination.size);
+			}
+			return undefined;
+		}
+
+		private _current() {
+			const pagination = this._store.get(this._store.path(pathPrefix, 'meta', 'pagination', this._initiatorId));
+			if (pagination) {
+				return Math.ceil(pagination.offset / pagination.size) + 1;
+			}
+			return undefined;
+		}
+
+		private _prev() {
+			if (!this._paginationHandle) {
+				const storeHandle = this._store.onChange(this._store.path(pathPrefix, 'meta', 'pagination'), () => {
+					this.invalidate();
+				});
+				this._paginationHandle = {
+					destroy: () => {
+						storeHandle.remove();
+					}
+				};
+				this.own(this._paginationHandle);
+			}
+
+			this._prevPageProcess({ initiator: this._initiatorId, pathPrefix });
+		}
+
+		private _next() {
+			if (!this._paginationHandle) {
+				const storeHandle = this._store.onChange(this._store.path(pathPrefix, 'meta', 'pagination'), () => {
+					this.invalidate();
+				});
+				this._paginationHandle = {
+					destroy: () => {
+						storeHandle.remove();
+					}
+				};
+				this.own(this._paginationHandle);
+			}
+			this._nextPageProcess({ initiator: this._initiatorId, pathPrefix });
+		}
+
+		private _goto(page: number) {
+			if (!this._paginationHandle) {
+				const storeHandle = this._store.onChange(this._store.path(pathPrefix, 'meta', 'pagination'), () => {
+					this.invalidate();
+				});
+				this._paginationHandle = {
+					destroy: () => {
+						storeHandle.remove();
+					}
+				};
+				this.own(this._paginationHandle);
+			}
+			this._gotoPageProcess({ page, initiator: this._initiatorId, pathPrefix });
+		}
+
+		private _getOrRead(options?: GetOrReadOptions): S[] | undefined {
+			let paginationMeta = this._store.get(this._store.path(pathPrefix, 'meta', 'pagination', this._initiatorId));
 			let paginationIds: string[] = [];
-			if (options) {
-				let pagination =
-					this._store.get(this._store.path(pathPrefix, 'pagination', `size-${options.size}`));
-				if (pagination) {
-					paginationIds = pagination.pages[`page-${options.offset}`] || [];
+			let pagination:
+				| undefined
+				| {
+						offset: number;
+						size: number;
+						start: number;
+				  };
+			if (paginationMeta) {
+				let offset = paginationMeta.offset;
+				let start = paginationMeta.start;
+				if (options && options.start && options.start !== paginationMeta.start) {
+					offset = (options.start - 1) * paginationMeta.size;
+					start = options.start;
+				}
+				pagination = {
+					offset: offset,
+					size: paginationMeta.size,
+					start
+				};
+			} else if (options) {
+				pagination = {
+					offset: (options.start - 1) * options.size,
+					size: options.size,
+					start: options.start
+				};
+			}
+
+			if (pagination) {
+				let pageData = this._store.get(this._store.path(pathPrefix, 'pagination', `size-${pagination.size}`));
+				if (pageData) {
+					paginationIds = pageData.pages[`page-${pagination.offset}`] || [];
 				}
 			}
 
 			if (this._isLoading({ action: 'read', type: 'many' })) {
-				return [];
+				return undefined;
 			}
 
 			const fetchResourcePage = options && !paginationIds.length;
@@ -142,9 +262,9 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 					action: 'read',
 					idKey,
 					initiator: this._initiatorId,
-					pagination: options
+					pagination
 				});
-				return [];
+				return undefined;
 			}
 
 			const data = this._store.get(this._store.path(pathPrefix, 'data'));
@@ -171,12 +291,15 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 				if (item) {
 					this._store = item.injector();
 					this._readManyProcess = readManyProcess(this._store);
+					this._prevPageProcess = prevPageProcess(this._store);
+					this._nextPageProcess = nextPageProcess(this._store);
+					this._gotoPageProcess = gotoPageProcess(this._store);
 					initializeResourceProcess(this._store)({ pathPrefix });
 				}
 			}
 
 			return renderer({
-				getOrRead: (pagination?: PaginationOptions) => {
+				getOrRead: (pagination?: GetOrReadOptions) => {
 					return this._getOrRead(pagination);
 				},
 				isFailed: (options: StatusOptions) => {
@@ -184,6 +307,23 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 				},
 				isLoading: (options: StatusOptions) => {
 					return this._isLoading(options);
+				},
+				page: {
+					next: () => {
+						return this._next();
+					},
+					previous: () => {
+						return this._prev();
+					},
+					goto: (page: number) => {
+						return this._goto(page);
+					},
+					total: () => {
+						return this._total();
+					},
+					current: () => {
+						return this._current();
+					}
 				}
 			});
 		}
