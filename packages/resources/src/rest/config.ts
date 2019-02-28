@@ -1,11 +1,11 @@
 import fetch from '@dojo/framework/shim/fetch';
-import { ResourceConfig, PaginationOptions } from './../provider';
+import { ResourceConfig, ReadPaginationOptions } from './../provider';
 
 export interface RestResourceUrlOptions {
 	origin: string;
 	name: string;
 	id?: string;
-	pagination?: PaginationOptions;
+	pagination?: ReadPaginationOptions;
 }
 
 export interface RestResourceUrlFunction {
@@ -64,7 +64,7 @@ export function config<S>(config: RestResource<S>): ResourceConfig<S> {
 	return {
 		idKey,
 		template,
-		async read(pagination?: PaginationOptions) {
+		async read(pagination?: ReadPaginationOptions) {
 			if (!many.read) {
 				throw new Error(`ReadMany Resource Operation not supported for ${name}`);
 			}

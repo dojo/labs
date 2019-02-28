@@ -1,3 +1,4 @@
+import Map from '@dojo/framework/shim/Map';
 import { uuid } from '@dojo/framework/core/util';
 import WidgetBase from '@dojo/framework/widget-core/WidgetBase';
 import { ResourceState } from './interfaces';
@@ -13,11 +14,12 @@ import {
 	GotoPagePayload,
 	prevPage,
 	nextPage,
-	gotoPage
+	gotoPage,
+	PaginationPayload
 } from './commands';
 import { RenderResult, Constructor } from '@dojo/framework/widget-core/interfaces';
 import alwaysRender from '@dojo/framework/widget-core/decorators/alwaysRender';
-import Store from '@dojo/framework/stores/Store';
+import Store, { Path } from '@dojo/framework/stores/Store';
 import { Handle } from '@dojo/framework/core/Destroyable';
 
 export type Status = 'failed' | 'loading' | 'completed';
@@ -58,14 +60,14 @@ export interface ManyResourceResponse<S = any> {
 	success: boolean;
 }
 
-export interface PaginationOptions {
+export interface ReadPaginationOptions {
 	offset: number;
 	size: number;
 }
 
 export interface ResourceRead<S> {
 	(): Promise<ManyResourceResponse<S>> | ManyResourceResponse<S>;
-	(pagination?: PaginationOptions): Promise<ManyResourceResponse<S>> | ManyResourceResponse<S>;
+	(pagination?: ReadPaginationOptions): Promise<ManyResourceResponse<S>> | ManyResourceResponse<S>;
 }
 
 export interface ResourceConfig<S> {
@@ -89,7 +91,12 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 				if (error) {
 					const { action, type, pathPrefix, initiator } = result.payload;
 					result.store.apply(result.undoOperations, true);
-					result.executor(failedResourceProcess, { action, type, pathPrefix, initiator });
+					result.executor(failedResourceProcess, {
+						action,
+						type,
+						pathPrefix,
+						initiator
+					});
 				}
 			}
 		})
@@ -107,8 +114,19 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 		private _nextPageProcess: ProcessExecutor<ResourceState<any>, NextPagePayload, NextPagePayload>;
 		private _prevPageProcess: ProcessExecutor<ResourceState<any>, PrevPagePayload, PrevPagePayload>;
 		private _gotoPageProcess: ProcessExecutor<ResourceState<any>, GotoPagePayload, GotoPagePayload>;
-		private _getOrReadHandle: Handle | undefined;
-		private _paginationHandle: Handle | undefined;
+		private _storeHandles = new Map<string, Handle>();
+
+		constructor() {
+			super();
+			this.own({
+				destroy: () => {
+					this._storeHandles.forEach((handle) => {
+						handle.destroy();
+					});
+					this._storeHandles.clear();
+				}
+			});
+		}
 
 		private _getStatus(options: StatusOptions = {}, statusType: string) {
 			const { action, type } = options;
@@ -153,65 +171,52 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 			return undefined;
 		}
 
-		private _prev() {
-			if (!this._paginationHandle) {
-				const storeHandle = this._store.onChange(this._store.path(pathPrefix, 'meta', 'pagination'), () => {
+		private _subscribeToStore<U>(paths: Path<ResourceState<S>, U>) {
+			const existing = this._storeHandles.get(paths.path);
+			if (!existing) {
+				const storeHandle = this._store.onChange(paths, () => {
 					this.invalidate();
 				});
-				this._paginationHandle = {
+				this._storeHandles.set(paths.path, {
 					destroy: () => {
 						storeHandle.remove();
 					}
-				};
-				this.own(this._paginationHandle);
+				});
 			}
+		}
 
+		private _getPaginationIds(pagination?: ReadPaginationOptions) {
+			let ids: string[] = [];
+			if (pagination) {
+				const pageData = this._store.get(this._store.path(pathPrefix, 'pagination', `size-${pagination.size}`));
+				if (pageData) {
+					ids = pageData.pages[`page-${pagination.offset}`] || [];
+				}
+			}
+			return ids;
+		}
+
+		private _prev() {
+			this._subscribeToStore(this._store.path(pathPrefix, 'meta', 'pagination'));
 			this._prevPageProcess({ initiator: this._initiatorId, pathPrefix });
 		}
 
 		private _next() {
-			if (!this._paginationHandle) {
-				const storeHandle = this._store.onChange(this._store.path(pathPrefix, 'meta', 'pagination'), () => {
-					this.invalidate();
-				});
-				this._paginationHandle = {
-					destroy: () => {
-						storeHandle.remove();
-					}
-				};
-				this.own(this._paginationHandle);
-			}
+			this._subscribeToStore(this._store.path(pathPrefix, 'meta', 'pagination'));
 			this._nextPageProcess({ initiator: this._initiatorId, pathPrefix });
 		}
 
 		private _goto(page: number) {
-			if (!this._paginationHandle) {
-				const storeHandle = this._store.onChange(this._store.path(pathPrefix, 'meta', 'pagination'), () => {
-					this.invalidate();
-				});
-				this._paginationHandle = {
-					destroy: () => {
-						storeHandle.remove();
-					}
-				};
-				this.own(this._paginationHandle);
-			}
+			this._subscribeToStore(this._store.path(pathPrefix, 'meta', 'pagination'));
 			this._gotoPageProcess({ page, initiator: this._initiatorId, pathPrefix });
 		}
 
 		private _getOrRead(options?: GetOrReadOptions): S[] | undefined {
 			let paginationMeta = this._store.get(this._store.path(pathPrefix, 'meta', 'pagination', this._initiatorId));
 			let paginationIds: string[] = [];
-			let pagination:
-				| undefined
-				| {
-						offset: number;
-						size: number;
-						start: number;
-				  };
+			let pagination: undefined | PaginationPayload;
 			if (paginationMeta) {
-				let offset = paginationMeta.offset;
-				let start = paginationMeta.start;
+				let { offset, start } = paginationMeta;
 				if (options && options.start && options.start !== paginationMeta.start) {
 					offset = (options.start - 1) * paginationMeta.size;
 					start = options.start;
@@ -229,31 +234,16 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 				};
 			}
 
-			if (pagination) {
-				let pageData = this._store.get(this._store.path(pathPrefix, 'pagination', `size-${pagination.size}`));
-				if (pageData) {
-					paginationIds = pageData.pages[`page-${pagination.offset}`] || [];
-				}
-			}
+			paginationIds = this._getPaginationIds(pagination);
 
 			if (this._isLoading({ action: 'read', type: 'many' })) {
 				return undefined;
 			}
 
-			const fetchResourcePage = options && !paginationIds.length;
+			const fetchResourcePage = pagination && !paginationIds.length;
 
 			if (fetchResourcePage || !this._isCompleted({ action: 'read', type: 'many' })) {
-				if (!this._getOrReadHandle) {
-					const storeHandle = this._store.onChange(this._store.path(pathPrefix, 'data'), () => {
-						this.invalidate();
-					});
-					this._getOrReadHandle = {
-						destroy: () => {
-							storeHandle.remove();
-						}
-					};
-					this.own(this._getOrReadHandle);
-				}
+				this._subscribeToStore(this._store.path(pathPrefix, 'data'));
 				this._readManyProcess({
 					pathPrefix,
 					config,
@@ -264,8 +254,13 @@ export function provider<S>(config: ResourceConfig<S>): Constructor<WidgetBase<R
 					initiator: this._initiatorId,
 					pagination
 				});
+			}
+
+			if (!this._isCompleted({ action: 'read', type: 'many' })) {
 				return undefined;
 			}
+
+			paginationIds = this._getPaginationIds(pagination);
 
 			const data = this._store.get(this._store.path(pathPrefix, 'data'));
 			if (paginationIds.length) {

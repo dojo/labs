@@ -3,7 +3,7 @@ const { assert } = intern.getPlugin('chai');
 
 import Store from '@dojo/framework/stores/Store';
 import { registerStoreInjector } from '@dojo/framework/stores/StoreInjector';
-import provider, { PaginationOptions } from '../../src/provider';
+import provider, { ReadPaginationOptions } from '../../src/provider';
 
 let store: Store;
 let registry: any;
@@ -37,11 +37,7 @@ describe('ResourceProvider', () => {
 				const result = getOrRead();
 				assert.isUndefined(current());
 				assert.isUndefined(total());
-				if (renderCount === 1) {
-					assert.isUndefined(result);
-				} else {
-					assert.deepEqual(result, [{ id: 'a' }]);
-				}
+				assert.deepEqual(result, [{ id: 'a' }]);
 				return null;
 			}
 		});
@@ -66,7 +62,7 @@ describe('ResourceProvider', () => {
 			template: (resource: any) => {
 				return resource;
 			},
-			read: (options?: PaginationOptions) => {
+			read: (options?: ReadPaginationOptions) => {
 				readCallCount++;
 				if (renderCount === 1) {
 					assert.deepEqual(options, { offset: 0, size: 20 });
@@ -87,9 +83,7 @@ describe('ResourceProvider', () => {
 			renderer: ({ getOrRead, page: { current, total } }) => {
 				renderCount++;
 				const result = getOrRead({ start: pageNumber, size: 20 });
-				if (renderCount === 1 || renderCount === 3) {
-					assert.isUndefined(result);
-				} else if (renderCount === 2) {
+				if (renderCount < 3) {
 					assert.strictEqual(total(), 2);
 					assert.strictEqual(current(), 1);
 					assert.deepEqual(result, [{ id: 'a' }]);
@@ -126,11 +120,11 @@ describe('ResourceProvider', () => {
 			template: (resource: any) => {
 				return resource;
 			},
-			read: (options?: PaginationOptions) => {
+			read: (options?: ReadPaginationOptions) => {
 				readCallCount++;
 				return options!.offset === 0
-					? { data: [{ id: 'a' }], success: true, total: 1 }
-					: { data: [{ id: 'b' }], success: true, total: 1 };
+					? { data: [{ id: 'a' }], success: true, total: 40 }
+					: { data: [{ id: 'b' }], success: true, total: 40 };
 			}
 		});
 
@@ -141,9 +135,7 @@ describe('ResourceProvider', () => {
 				nextFunction = next;
 				renderCount++;
 				const result = getOrRead({ start: 1, size: 20 });
-				if (renderCount === 1 || renderCount === 3) {
-					assert.isUndefined(result);
-				} else if (renderCount === 2) {
+				if (renderCount < 3) {
 					assert.deepEqual(result, [{ id: 'a' }]);
 				} else {
 					assert.deepEqual(result, [{ id: 'b' }]);
@@ -176,7 +168,7 @@ describe('ResourceProvider', () => {
 			template: (resource: any) => {
 				return resource;
 			},
-			read: (options?: PaginationOptions) => {
+			read: (options?: ReadPaginationOptions) => {
 				readCallCount++;
 				return options!.offset === 0
 					? { data: [{ id: 'a' }], success: true, total: 1 }
@@ -191,9 +183,7 @@ describe('ResourceProvider', () => {
 				prevFunction = previous;
 				renderCount++;
 				const result = getOrRead({ start: 2, size: 20 });
-				if (renderCount === 1 || renderCount === 3) {
-					assert.isUndefined(result);
-				} else if (renderCount === 2) {
+				if (renderCount < 3) {
 					assert.deepEqual(result, [{ id: 'b' }]);
 				} else {
 					assert.deepEqual(result, [{ id: 'a' }]);
@@ -226,11 +216,11 @@ describe('ResourceProvider', () => {
 			template: (resource: any) => {
 				return resource;
 			},
-			read: (options?: PaginationOptions) => {
+			read: (options?: ReadPaginationOptions) => {
 				readCallCount++;
 				return options!.offset === 0
-					? { data: [{ id: 'a' }], success: true, total: 1 }
-					: { data: [{ id: 'b' }], success: true, total: 1 };
+					? { data: [{ id: 'a' }], success: true, total: 40 }
+					: { data: [{ id: 'b' }], success: true, total: 40 };
 			}
 		});
 
@@ -241,9 +231,7 @@ describe('ResourceProvider', () => {
 				gotoFunction = goto;
 				renderCount++;
 				const result = getOrRead({ start: 1, size: 20 });
-				if (renderCount === 1 || renderCount === 3) {
-					assert.isUndefined(result);
-				} else if (renderCount === 2) {
+				if (renderCount < 3) {
 					assert.deepEqual(result, [{ id: 'a' }]);
 				} else {
 					assert.deepEqual(result, [{ id: 'b' }]);
@@ -286,11 +274,7 @@ describe('ResourceProvider', () => {
 			renderer: (resource) => {
 				renderCount++;
 				const result = resource.getOrRead();
-				if (renderCount === 1) {
-					assert.isUndefined(result);
-				} else {
-					assert.deepEqual(result, [{ id: 'a' }]);
-				}
+				assert.deepEqual(result, [{ id: 'a' }]);
 				return null;
 			}
 		});

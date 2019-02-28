@@ -1,11 +1,17 @@
 import { isThenable } from '@dojo/framework/shim/Promise';
-import { ResourceState } from './interfaces';
+import { ResourceState, ResourceIdMap, ResourceData, ResourceMetaItems } from './interfaces';
 import { Command, createCommandFactory } from '@dojo/framework/stores/process';
 import { replace } from '@dojo/framework/stores/state/operations';
 import { uuid } from '@dojo/framework/core/util';
-import { PatchOperation } from '@dojo/framework/stores/state/Patch';
 import { ResourceConfig, ManyResourceResponse } from './provider';
 import { StatePaths, Path } from '@dojo/framework/stores/Store';
+import { PatchOperation } from '@dojo/framework/stores/state/Patch';
+
+export interface PaginationPayload {
+	offset: number;
+	size: number;
+	start: number;
+}
 
 export interface ReadManyPayload {
 	pathPrefix: string;
@@ -15,10 +21,7 @@ export interface ReadManyPayload {
 	action: string;
 	initiator: string;
 	type: string;
-	pagination?: {
-		offset: number;
-		size: number;
-	};
+	pagination?: PaginationPayload;
 }
 
 export interface FailedResourcePayload {
@@ -83,8 +86,15 @@ export const beforeReadMany: Command<ResourceState, ReadManyPayload> = createCom
 		const initiators = get(path(metaPath, 'actions', 'read', 'many', 'loading')) || [];
 		initiators.push(initiator);
 		const loadingOp = replace(path(metaPath, 'actions', 'read', 'many', 'loading'), initiators);
+		const paginationMeta = get(path(metaPath, 'pagination', initiator));
 		if (pagination) {
-			return [loadingOp, replace(path(metaPath, 'pagination', initiator), pagination)];
+			return [
+				loadingOp,
+				replace(path(metaPath, 'pagination', initiator), {
+					...paginationMeta,
+					...pagination
+				})
+			];
 		}
 		return [loadingOp];
 	}
@@ -105,14 +115,35 @@ function processReadMany(
 	}
 
 	const batchIds: string[] = [];
+	let idMap: ResourceIdMap = {};
+	let data: ResourceData<any> = {};
+	let metaItems: ResourceMetaItems = {};
 	let operations: PatchOperation[] = [];
-	result.data.forEach((item: any) => {
-		const syntheticId = uuid();
-		batchIds.push(syntheticId);
-		operations.push(replace(path(pathPrefix, 'idMap', item[idKey]), syntheticId));
-		operations.push(replace(path(pathPrefix, 'data', syntheticId), template(item)));
-		operations.push(replace(path(metaPath, 'items', syntheticId, 'read', 'completed'), [initiator]));
-	});
+	if (result.data.length) {
+		result.data.forEach((item: any) => {
+			const syntheticId = uuid();
+			batchIds.push(syntheticId);
+			idMap[item[idKey]] = syntheticId;
+			data[syntheticId] = template(item);
+			metaItems[syntheticId] = {
+				read: {
+					completed: [initiator],
+					loading: [],
+					failed: []
+				}
+			};
+		});
+
+
+		let currentItems = get(path(metaPath, 'items'));
+		let currentData = get(path(pathPrefix, 'data'));
+		let currentIdMap = get(path(pathPrefix, 'idMap'));
+		operations = [
+			replace(path(metaPath, 'items'), { ...currentItems, ...metaItems }),
+			replace(path(pathPrefix, 'data'), { ...currentData, ...data }),
+			replace(path(pathPrefix, 'idMap'), { ...currentIdMap, ...idMap })
+		];
+	}
 
 	let loadingInitiators = get(path(metaPath, 'actions', 'read', 'many', 'loading')) || [];
 	loadingInitiators = [...loadingInitiators];
@@ -129,15 +160,10 @@ function processReadMany(
 
 	if (pagination) {
 		const { offset, size } = pagination;
-		const paginationIds = {
-			pages: {
-				[`page-${offset}`]: batchIds
-			},
-			total: result.total
-		};
 		return [
 			...operations,
-			replace(path(pathPrefix, 'pagination', `size-${size}`), paginationIds),
+			replace(path(path(pathPrefix, 'pagination'), `size-${size}`, 'pages', `page-${offset}`), batchIds),
+			replace(path(path(pathPrefix, 'pagination'), `size-${size}`, 'total'), result.total),
 			replace(path(pathPrefix, 'meta', 'pagination', initiator, 'total'), result.total)
 		];
 	}
@@ -165,10 +191,11 @@ export const nextPage: Command<ResourceState, NextPagePayload> = createCommand<N
 	({ path, payload, get }) => {
 		const { pathPrefix, initiator } = payload;
 		const currentPagination = get(path(pathPrefix, 'meta', 'pagination', initiator));
-		const newOffset =
-			currentPagination.offset + currentPagination.size > currentPagination.total
-				? currentPagination.offset + currentPagination.size
-				: currentPagination.total - currentPagination.size;
+		let newOffset = currentPagination.offset + currentPagination.size;
+		if (newOffset >= currentPagination.total) {
+			const remainder = currentPagination.total % currentPagination.size || currentPagination.size;
+			newOffset = currentPagination.total - remainder;
+		}
 
 		return [
 			replace(path(pathPrefix, 'meta', 'pagination', initiator), {
@@ -186,7 +213,7 @@ export const prevPage: Command<ResourceState, PrevPagePayload> = createCommand<P
 		const { pathPrefix, initiator } = payload;
 		const currentPagination = get(path(pathPrefix, 'meta', 'pagination', initiator));
 		const newOffset =
-			currentPagination.offset - currentPagination.size > 0
+			currentPagination.offset - currentPagination.size < 0
 				? 0
 				: currentPagination.offset - currentPagination.size;
 
@@ -205,11 +232,12 @@ export const gotoPage: Command<ResourceState, GotoPagePayload> = createCommand<G
 	({ path, payload, get }) => {
 		const { pathPrefix, initiator, page } = payload;
 		const currentPagination = get(path(pathPrefix, 'meta', 'pagination', initiator));
-		let newOffset = page * currentPagination.size;
+		let newOffset = (page - 1) * currentPagination.size;
 		if (newOffset < 0) {
 			newOffset = 0;
-		} else if (newOffset > currentPagination.total) {
-			newOffset = currentPagination.total - currentPagination.size;
+		} else if (newOffset >= currentPagination.total) {
+			const remainder = currentPagination.total % currentPagination.size || currentPagination.size;
+			newOffset = currentPagination.total - remainder;
 		}
 		return [
 			replace(path(pathPrefix, 'meta', 'pagination', initiator), {
@@ -227,8 +255,8 @@ export const failedResource: Command<ResourceState, FailedResourcePayload> = cre
 		const { pathPrefix, type, action, initiator } = payload;
 		const actionsPath = path(pathPrefix, 'meta', 'actions');
 
-		let failedInitiators = get(path(actionsPath, 'read', 'many', 'failed')) || [];
-		let loadingInitiators = get(path(actionsPath, 'read', 'many', 'completed')) || [];
+		let failedInitiators = get(path(actionsPath, 'read', 'many', 'failed'));
+		let loadingInitiators = get(path(actionsPath, 'read', 'many', 'completed'));
 		loadingInitiators = [...loadingInitiators];
 		const index = loadingInitiators.indexOf(initiator);
 		loadingInitiators.splice(index, 1);
