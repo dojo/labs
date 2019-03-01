@@ -91,20 +91,20 @@ export interface ResourceState<S = any> {
 // 		'order-is': '1'
 // 	},
 // 	pagination: {
-//		'size-20': {
-//			'total': 200,
-//			'pages': {
-//				'page-1': [ '2', '3' ]
-//			}
-//		}
+// 		'size-20': {
+// 			'total': 200,
+// 			'pages': {
+// 				'page-1': [ '2', '3' ]
+// 			}
+// 		}
 // },
 // 	meta: {
-//		pagination: {
-//			initiator: {
-//				offset: 20,
-//				size:
-//			}
-//		}
+// 		pagination: {
+// 			initiator: {
+// 				offset: 20,
+// 				size:
+// 			}
+// 		}
 // 		actions: {
 // 			read: {
 // 				one: {
@@ -133,31 +133,31 @@ export interface ResourceState<S = any> {
 // 		},
 // 		items: {
 // 			'1': {
-//				log: {
-//					action-id: {
-//						result: {}
-//					}
-//				},
-//				create: {
+// 				log: {
+// 					action-id: {
+// 						result: {}
+// 					}
+// 				},
+// 				create: {
 // 					'loading': [ 'initiator-id' ],
 // 					'failed': [ 'initiator-id' ],
 // 					'completed': [ 'initiator-id' ]
-//				},
-//				update: {
+// 				},
+// 				update: {
 // 					'loading': [ 'initiator-id' ],
 // 					'failed': [ 'initiator-id' ],
 // 					'completed': [ 'initiator-id' ]
-//				},
-//				remove: {
+// 				},
+// 				remove: {
 // 					'loading': [ 'initiator-id' ],
 // 					'failed': [ 'initiator-id' ],
 // 					'completed': [ 'initiator-id' ]
-//				},
-//				read: {
+// 				},
+// 				read: {
 // 					'loading': [ 'initiator-id' ],
 // 					'failed': [ 'initiator-id' ],
 // 					'completed': [ 'initiator-id' ]
-//				}
+// 				}
 // 			}
 // 		}
 // 	}

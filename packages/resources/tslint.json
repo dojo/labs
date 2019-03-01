@@ -1,0 +1,3 @@
+{
+	"extends": "@dojo/scripts/tslint/base.json"
+}
