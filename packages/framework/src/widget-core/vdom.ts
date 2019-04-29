@@ -1303,10 +1303,8 @@ export function renderer(renderer: () => any): Renderer {
 		const uniqueId = `${id}-${metaId++}`;
 		for (let i = 0; i < keys.length; i++) {
 			const middleware = middlewares[keys[i]];
-			const widgetMeta = widgetMetaMap.get(id)!;
 			const payload: any = {
-				id: uniqueId,
-				invalidator: widgetMeta.invalidator
+				id: uniqueId
 			};
 			Object.defineProperty(payload, 'properties', {
 				get() {
@@ -1319,8 +1317,8 @@ export function renderer(renderer: () => any): Renderer {
 				configurable: true
 			});
 			if (middleware.middlewares) {
-				const blah = resolveMiddleware(middleware.middlewares, id);
-				payload.middleware = blah;
+				const resolvedMiddleware = resolveMiddleware(middleware.middlewares, id);
+				payload.middleware = resolvedMiddleware;
 				results[keys[i]] = middleware.callback(payload);
 			} else {
 				results[keys[i]] = middleware.callback(payload);
