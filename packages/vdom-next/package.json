@@ -1,0 +1,40 @@
+{
+	"name": "@dojo-labs/vdom-next",
+	"version": "0.0.1",
+	"description": "",
+	"main": "main.js",
+	"scripts": {
+		"build:esm": "tsc -p tsconfig.esm.json",
+		"build:static:dev": "cpx \"{src,tests}/**/*.{html,png,jpg,gif,json,xml,css,txt,d.ts}\" dist/dev",
+		"build:static:release": "cpx \"src/**/*.d.ts\" dist/release",
+		"build:umd": "tsc",
+		"build": "npm-run-all -p build:** -s dojo-package",
+		"clean": "rimraf dist coverage benchmark-results",
+		"dojo-package": "dojo-package",
+		"dojo-release": "dojo-release",
+		"intern": "intern",
+		"lint:tsc": "tslint -p .",
+		"lint:prettier": "prettier -l \"{src,tests}/**/*.{ts,tsx}\"",
+		"prettier": "prettier --write \"{docs,src,tests}/**/*.{ts,tsx,md}\"",
+		"lint": "run-p lint:*",
+		"release": "run-s lint clean build \"dojo-release -- {@}\" --",
+		"test": "run-s build intern",
+		"test:local": "run-s build \"intern config=@local\"",
+		"test:browserstack": "run-s build \"intern config=@browserstack\"",
+		"uploadCoverage": "codecov --file=coverage/coverage.json",
+		"watch:ts": "dojo-tsc-watcher -p tsconfig.json -p tsconfig.esm.json -- dojo-package",
+		"watch": "run-p watch:ts \"build:static:** -- --watch\""
+	},
+	"author": "",
+	"license": "BSD-3-Clause",
+	"devDependencies": {
+		"@dojo/framework": "6.0.0-alpha.1",
+		"@dojo/scripts": "^3.1.0",
+		"cpx": "^1.5.0",
+		"npm-run-all": "^4.1.5",
+		"typescript": "3.3.3"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}
