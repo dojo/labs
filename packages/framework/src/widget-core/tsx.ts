@@ -11,8 +11,9 @@ import {
 	RenderResult,
 	WidgetProperties
 } from '@dojo/framework/widget-core/interfaces';
-import { isWNode, WNODE } from '@dojo/framework/widget-core/d';
-export { tsx, FromRegistry } from '@dojo/framework/widget-core/tsx';
+import { isWNode, WNODE, v } from '@dojo/framework/widget-core/d';
+import { REGISTRY_ITEM } from '@dojo/framework/widget-core/tsx';
+export { FromRegistry } from '@dojo/framework/widget-core/tsx';
 export { v } from '@dojo/framework/widget-core/d';
 
 export interface MiddlewareMap<Middleware extends { api: any; properties: any; children: any }> {
@@ -128,6 +129,31 @@ export function w<W extends WidgetBaseInterface>(
 		properties,
 		type: WNODE
 	};
+}
+
+function spreadChildren(children: any[], child: any): any[] {
+	if (Array.isArray(child)) {
+		return child.reduce(spreadChildren, children);
+	} else {
+		return [...children, child];
+	}
+}
+
+export function tsx(tag: any, properties = {}, ...children: any[]): DNode {
+	children = children.reduce(spreadChildren, []);
+	properties = properties === null ? {} : properties;
+	if (typeof tag === 'string') {
+		return v(tag, properties, children);
+	} else if (tag.type === 'registry' && (properties as any).__autoRegistryItem) {
+		const name = (properties as any).__autoRegistryItem;
+		delete (properties as any).__autoRegistryItem;
+		return w(name, properties, children);
+	} else if (tag.type === REGISTRY_ITEM) {
+		const registryItem = new tag();
+		return w(registryItem.name, properties, children);
+	} else {
+		return w(tag, properties, children);
+	}
 }
 
 export function widget(): WidgetResult;
