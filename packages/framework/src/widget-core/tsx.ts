@@ -76,22 +76,6 @@ export interface WidgetCallback<Props, Middleware, MiddlewareProps> {
 	): RenderResult;
 }
 
-/**
- * Property Change record for specific property diff functions
- */
-export interface PropertyChangeRecord {
-	changed: boolean;
-	value: any;
-}
-
-export interface DiffPropertyFunction {
-	(previousProperty: any, newProperty: any): PropertyChangeRecord;
-}
-
-export interface DiffPropertyReaction {
-	(previousProperties: any, newProperties: any): void;
-}
-
 export interface WidgetBaseTypes<P = WidgetProperties, C extends DNode = DNode> {
 	/**
 	 * Widget properties
