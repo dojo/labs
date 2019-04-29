@@ -3,25 +3,25 @@ import has from '@dojo/framework/has/has';
 import { WeakMap } from '@dojo/framework/shim/WeakMap';
 import { Map } from '@dojo/framework/shim/Map';
 import { Set } from '@dojo/framework/shim/Set';
-import {
-	WNode,
-	VNode,
-	DNode,
-	VNodeProperties,
-	TransitionStrategy,
-	SupportedClassName,
-	DomVNode,
-	LazyDefine,
-	Constructor,
-	RenderResult,
-	WidgetBaseInterface
-} from './interfaces';
 import transitionStrategy from '@dojo/framework/widget-core/animations/cssTransitions';
-import { isVNode, isWNode, WNODE, v, isDomVNode, w, VNODE, widget, isWidget, isWidgetBaseConstructor } from './tsx';
-import { Registry } from '@dojo/framework/widget-core/Registry';
+import { isVNode, isWNode, WNODE, v, w, VNODE, widget, isWidget, isDomVNode } from './tsx';
+import { Registry, isWidgetBaseConstructor } from '@dojo/framework/widget-core/Registry';
 import { widgetInstanceMap } from '@dojo/framework/widget-core/WidgetBase';
 import { RegistryHandler } from '@dojo/framework/widget-core/RegistryHandler';
 import { auto } from '@dojo/framework/widget-core/diff';
+import {
+	WNode,
+	VNode,
+	Constructor,
+	DomVNode,
+	VNodeProperties,
+	TransitionStrategy,
+	LazyDefine,
+	SupportedClassName,
+	DNode,
+	RenderResult,
+	WidgetBaseInterface
+} from '@dojo/framework/widget-core/interfaces';
 
 export interface BaseNodeWrapper {
 	node: WNode<any> | VNode;
@@ -603,7 +603,7 @@ export function renderer(renderer: () => any): Renderer {
 					}
 					registryLabel = label;
 				} else {
-					registryLabel = wrapper.node.widgetConstructor;
+					registryLabel = wrapper.node.widgetConstructor as any;
 				}
 
 				wrapper.registryItem = registry.get(registryLabel);
@@ -1358,7 +1358,7 @@ export function renderer(renderer: () => any): Renderer {
 				widgetMeta.middleware = middleware;
 			}
 
-			rendered = Constructor({
+			rendered = (Constructor as any)({
 				properties: next.node.properties,
 				children: next.node.children,
 				middleware
@@ -1435,6 +1435,7 @@ export function renderer(renderer: () => any): Renderer {
 		if (domNode && domNode.parentNode) {
 			next.domNode = domNode;
 		}
+
 		if (!isWidgetBaseConstructor(Constructor)) {
 			const widgetMeta = widgetMetaMap.get(next.id);
 			if (widgetMeta) {
@@ -1444,7 +1445,7 @@ export function renderer(renderer: () => any): Renderer {
 				});
 				if (widgetMeta.dirty) {
 					widgetMeta.dirty = false;
-					rendered = Constructor({
+					rendered = (Constructor as any)({
 						properties: next.node.properties,
 						children: next.node.children,
 						middleware: widgetMeta.middleware

@@ -1,24 +1,108 @@
+import { WIDGET_BASE_TYPE } from '@dojo/framework/widget-core/Registry';
 import {
-	Constructor,
-	DNode,
-	WidgetResult,
-	MiddlewareMap,
-	WidgetResultWithMiddleware,
-	WidgetCallback,
-	UnionToIntersection,
-	MiddlewareCallback,
-	MiddlewareResult,
-	WNodeFactory,
-	DeferredVirtualProperties,
 	WNode,
 	VNodeProperties,
+	DNode,
 	VNode,
-	WidgetBaseTypes,
+	DomVNode,
+	Constructor,
 	RegistryLabel,
 	LazyDefine,
-	DomVNode
-} from './interfaces';
-import { WIDGET_BASE_TYPE } from '@dojo/framework/widget-core/Registry';
+	DeferredVirtualProperties,
+	WidgetBaseInterface,
+	LazyWidget,
+	DefaultWidgetBaseInterface,
+	RenderResult,
+	WidgetProperties
+} from '@dojo/framework/widget-core/interfaces';
+
+export interface MiddlewareMap<Middleware extends { api: any; properties: any; children: any }> {
+	[index: string]: Middleware;
+}
+
+export type MiddlewareApiMap<U extends MiddlewareMap<any>> = { [P in keyof U]: U[P]['api'] };
+
+export interface MiddlewareCallback<Props, Middleware, ReturnValue> {
+	(
+		options: { id: string; invalidator: any; middleware: MiddlewareApiMap<Middleware>; properties: Props }
+	): ReturnValue;
+}
+
+export interface MiddlewareResult<Props, Middleware, ReturnValue> {
+	api: ReturnValue;
+	properties: Props;
+	callback: MiddlewareCallback<Props, Middleware, ReturnValue>;
+	middlewares: Middleware;
+}
+
+export interface WNodeFactory<W extends WidgetBaseTypes> {
+	(properties: W['properties'], children?: W['children']): WNode<DefaultWidgetBaseInterface>;
+}
+
+export interface WidgetResultWithMiddleware<T, MiddlewareProps> {
+	<Props, Children extends DNode[] = DNode[]>(
+		callback: (
+			options: {
+				middleware: MiddlewareApiMap<T>;
+				properties: UnionToIntersection<Props & MiddlewareProps>;
+				children: DNode[];
+			}
+		) => RenderResult
+	): WNodeFactory<{ properties: UnionToIntersection<Props & MiddlewareProps>; children: Children }>;
+}
+
+export interface WidgetResult {
+	<Props, Children extends DNode[] = DNode[]>(
+		callback: (
+			options: {
+				properties: Props;
+				children: DNode[];
+			}
+		) => RenderResult
+	): WNodeFactory<{ properties: Props; children: Children }>;
+}
+
+export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends ((k: infer I) => void)
+	? I
+	: never;
+
+export interface WidgetCallback<Props, Middleware, MiddlewareProps> {
+	(
+		options: {
+			middleware: MiddlewareApiMap<Middleware>;
+			properties: UnionToIntersection<Props & MiddlewareProps>;
+			children: DNode[];
+		}
+	): RenderResult;
+}
+
+/**
+ * Property Change record for specific property diff functions
+ */
+export interface PropertyChangeRecord {
+	changed: boolean;
+	value: any;
+}
+
+export interface DiffPropertyFunction {
+	(previousProperty: any, newProperty: any): PropertyChangeRecord;
+}
+
+export interface DiffPropertyReaction {
+	(previousProperties: any, newProperties: any): void;
+}
+
+export interface WidgetBaseTypes<P = WidgetProperties, C extends DNode = DNode> {
+	/**
+	 * Widget properties
+	 */
+	readonly properties: P & WidgetProperties;
+
+	/**
+	 * Returns the widget's children
+	 */
+	readonly children: (C | null)[];
+}
 
 declare global {
 	namespace JSX {
@@ -106,27 +190,27 @@ function spreadChildren(children: any[], child: any): any[] {
 	}
 }
 
-export function w<W extends WidgetBaseTypes>(
+export function w<W extends WidgetBaseInterface>(
 	node: WNode<W>,
 	properties: Partial<W['properties']>,
 	children?: W['children']
 ): WNode<W>;
-export function w<W extends WidgetBaseTypes>(
+export function w<W extends WidgetBaseInterface>(
 	widgetConstructor: Constructor<W> | RegistryLabel | WNodeFactory<W> | LazyDefine<W>,
 	properties: W['properties'],
 	children?: W['children']
 ): WNode<W>;
-export function w<W extends WidgetBaseTypes>(
+export function w<W extends WidgetBaseInterface>(
 	widgetConstructorOrNode:
 		| Constructor<W>
 		| RegistryLabel
 		| WNodeFactory<W>
-		| WidgetCallback<any, any, any>
 		| WNode<W>
-		| LazyDefine<W>,
+		| LazyDefine<W>
+		| LazyWidget<W>,
 	properties: W['properties'],
 	children?: W['children']
-): WNode<{ properties: W['properties']; children: W['children'] }> {
+): any {
 	if (isWNodeFactory<W>(widgetConstructorOrNode)) {
 		return widgetConstructorOrNode(properties, children);
 	}
