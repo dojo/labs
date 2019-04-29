@@ -24,7 +24,7 @@ export type MiddlewareApiMap<U extends MiddlewareMap<any>> = { [P in keyof U]: U
 
 export interface MiddlewareCallback<Props, Middleware, ReturnValue> {
 	(
-		options: { id: string; invalidator: any; middleware: MiddlewareApiMap<Middleware>; properties: Props }
+		options: { id: string; middleware: MiddlewareApiMap<Middleware>; properties: Props }
 	): ReturnValue;
 }
 
