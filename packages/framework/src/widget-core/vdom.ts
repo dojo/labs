@@ -4,9 +4,10 @@ import { WeakMap } from '@dojo/framework/shim/WeakMap';
 import { Map } from '@dojo/framework/shim/Map';
 import { Set } from '@dojo/framework/shim/Set';
 import transitionStrategy from '@dojo/framework/widget-core/animations/cssTransitions';
-import { isVNode, isWNode, WNODE, v, w, VNODE, widget, isWidget, isDomVNode } from './tsx';
+import { w, widget, isWidget } from './tsx';
 import { Registry, isWidgetBaseConstructor } from '@dojo/framework/widget-core/Registry';
 import { widgetInstanceMap } from '@dojo/framework/widget-core/WidgetBase';
+import { isDomVNode, isVNode, isWNode, v, WNODE, VNODE } from '@dojo/framework/widget-core/d';
 import { RegistryHandler } from '@dojo/framework/widget-core/RegistryHandler';
 import { auto } from '@dojo/framework/widget-core/diff';
 import {

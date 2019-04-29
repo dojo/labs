@@ -3,18 +3,16 @@ import {
 	WNode,
 	VNodeProperties,
 	DNode,
-	VNode,
-	DomVNode,
 	Constructor,
 	RegistryLabel,
 	LazyDefine,
-	DeferredVirtualProperties,
 	WidgetBaseInterface,
 	LazyWidget,
 	DefaultWidgetBaseInterface,
 	RenderResult,
 	WidgetProperties
 } from '@dojo/framework/widget-core/interfaces';
+import { v, isWNode, WNODE } from '@dojo/framework/widget-core/d';
 
 export interface MiddlewareMap<Middleware extends { api: any; properties: any; children: any }> {
 	[index: string]: Middleware;
@@ -77,14 +75,7 @@ export interface WidgetCallback<Props, Middleware, MiddlewareProps> {
 }
 
 export interface WidgetBaseTypes<P = WidgetProperties, C extends DNode = DNode> {
-	/**
-	 * Widget properties
-	 */
 	readonly properties: P & WidgetProperties;
-
-	/**
-	 * Returns the widget's children
-	 */
 	readonly children: (C | null)[];
 }
 
@@ -98,41 +89,6 @@ declare global {
 			[key: string]: VNodeProperties;
 		}
 	}
-}
-
-/**
- * The identifier for a WNode type
- */
-export const WNODE = '__WNODE_TYPE';
-
-/**
- * The identifier for a VNode type
- */
-export const VNODE = '__VNODE_TYPE';
-
-/**
- * The identifier for a VNode type created using dom()
- */
-export const DOMVNODE = '__DOMVNODE_TYPE';
-
-/**
- * Helper function that returns true if the `DNode` is a `WNode` using the `type` property
- */
-export function isWNode(child: DNode | any): child is WNode<any> {
-	return Boolean(child && child !== true && typeof child !== 'string' && child.type === WNODE);
-}
-
-/**
- * Helper function that returns true if the `DNode` is a `VNode` using the `type` property
- */
-export function isVNode(child: DNode): child is VNode {
-	return Boolean(
-		child && child !== true && typeof child !== 'string' && (child.type === VNODE || child.type === DOMVNODE)
-	);
-}
-
-export function isDomVNode(child: DNode): child is DomVNode {
-	return Boolean(child && child !== true && typeof child !== 'string' && child.type === DOMVNODE);
 }
 
 export const REGISTRY_ITEM = '__registry_item';
@@ -210,52 +166,6 @@ export function w<W extends WidgetBaseInterface>(
 		widgetConstructor: widgetConstructorOrNode,
 		properties,
 		type: WNODE
-	};
-}
-
-/**
- * Wrapper function for calls to create VNodes.
- */
-export function v(node: VNode, properties: VNodeProperties, children: undefined | DNode[]): VNode;
-export function v(node: VNode, properties: VNodeProperties): VNode;
-export function v(tag: string, children: undefined | DNode[]): VNode;
-export function v(tag: string, properties: DeferredVirtualProperties | VNodeProperties, children?: DNode[]): VNode;
-export function v(tag: string): VNode;
-export function v(
-	tag: string | VNode,
-	propertiesOrChildren: VNodeProperties | DeferredVirtualProperties | DNode[] = {},
-	children: undefined | DNode[] = undefined
-): VNode {
-	let properties: VNodeProperties | DeferredVirtualProperties = propertiesOrChildren;
-	let deferredPropertiesCallback;
-
-	if (Array.isArray(propertiesOrChildren)) {
-		children = propertiesOrChildren;
-		properties = {};
-	}
-
-	if (typeof properties === 'function') {
-		deferredPropertiesCallback = properties;
-		properties = {};
-	}
-
-	if (isVNode(tag)) {
-		let { classes = [], styles = {}, ...newProperties } = properties;
-		let { classes: nodeClasses = [], styles: nodeStyles = {}, ...nodeProperties } = tag.properties;
-		nodeClasses = Array.isArray(nodeClasses) ? nodeClasses : [nodeClasses];
-		classes = Array.isArray(classes) ? classes : [classes];
-		styles = { ...nodeStyles, ...styles };
-		properties = { ...nodeProperties, ...newProperties, classes: [...nodeClasses, ...classes], styles };
-		children = children ? children : tag.children;
-		tag = tag.tag;
-	}
-
-	return {
-		tag,
-		deferredPropertiesCallback,
-		children,
-		properties,
-		type: VNODE
 	};
 }
 
