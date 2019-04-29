@@ -224,17 +224,25 @@ function updateAttributes(
 	}
 }
 
-function diffProperties(current: any, next: any, id: string, invalidator: () => void) {
+function runDestroy(id: string) {
+	const handles = destroyMap.get(id);
+	if (handles) {
+		for (let i = 0; i < handles.length; i++) {
+			handles[i]();
+		}
+	}
+}
+
+function runProperties(current: any, next: any, id: string) {
 	const customDiffs = customDiffMap.get(id);
 	if (customDiffs) {
 		for (let i = 0; i < customDiffs.length; i++) {
-			const result = customDiffs[i](current, next);
-			if (result) {
-				invalidator();
-				return;
-			}
+			customDiffs[i]({ current, next });
 		}
 	}
+}
+
+function diffProperties(current: any, next: any, invalidator: () => void) {
 	const propertyNames = [...Object.keys(current), ...Object.keys(next)];
 	let diffedProperties = [];
 	for (let i = 0; i < propertyNames.length; i++) {
@@ -444,16 +452,20 @@ function wrapNodes(renderer: () => any) {
 const widgetMetaMap = new Map<string, WidgetMeta>();
 const registeredNodes = new Set();
 const customDiffMap = new Map<string, Function[]>();
+const destroyMap = new Map<string, Function[]>();
+const domNodeCacheMap = new Map<string, Map<string | number, HTMLElement>>();
 let wrapperId = 0;
 
-export function registerCustomDiff(id: string, diff: Function) {
+export function getNode(id: string, key: string | number): HTMLElement | null {
 	const [widgetId] = id.split('-');
-	const diffs = customDiffMap.get(widgetId) || [];
-	diffs.push(diff);
-	customDiffMap.set(widgetId, diffs);
+	const nodeMap = domNodeCacheMap.get(widgetId);
+	if (!nodeMap) {
+		registeredNodes.add(`${widgetId}-${key}`);
+		return null;
+	}
+	const foundNode = nodeMap.get(key) || null;
+	return foundNode;
 }
-
-const domNodeCacheMap = new Map<string, Map<string | number, HTMLElement>>();
 
 export function getRegistry(id: string): RegistryHandler | null {
 	const [widgetId] = id.split('-');
@@ -462,6 +474,29 @@ export function getRegistry(id: string): RegistryHandler | null {
 		return widgetMeta.registryHandler;
 	}
 	return null;
+}
+
+export function getInvalidator(id: string) {
+	const [widgetId] = id.split('-');
+	const widgetMeta = widgetMetaMap.get(widgetId);
+	if (widgetMeta) {
+		return widgetMeta.invalidator;
+	}
+	return null;
+}
+
+export function destroy(id: string, func: () => void): void {
+	const [widgetId] = id.split('-');
+	const handles = destroyMap.get(widgetId) || [];
+	handles.push(func);
+	destroyMap.set(widgetId, handles);
+}
+
+export function properties(id: string, func: (props: { next: any, current: any }) => void): void {
+	const [widgetId] = id.split('-');
+	const diffs = customDiffMap.get(widgetId) || [];
+	diffs.push(func);
+	customDiffMap.set(widgetId, diffs);
 }
 
 function addNodeToMap(id: string, key: string | number, node: HTMLElement) {
@@ -476,17 +511,6 @@ function addNodeToMap(id: string, key: string | number, node: HTMLElement) {
 		}
 	}
 	domNodeCacheMap.set(id, nodeMap);
-}
-
-export function getNodeById(id: string, key: string | number) {
-	const [widgetId] = id.split('-');
-	const nodeMap = domNodeCacheMap.get(widgetId);
-	if (!nodeMap) {
-		registeredNodes.add(`${widgetId}-${key}`);
-		return null;
-	}
-	const foundNode = nodeMap.get(key) || null;
-	return foundNode;
 }
 
 export function renderer(renderer: () => any): Renderer {
@@ -544,7 +568,7 @@ export function renderer(renderer: () => any): Renderer {
 		let callback = currentValue;
 
 		if (eventName === 'input') {
-			callback = function(this: any, evt: Event) {
+			callback = function (this: any, evt: Event) {
 				currentValue.call(this, evt);
 				(evt.target as any)['oninput-value'] = (evt.target as HTMLInputElement).value;
 			};
@@ -1441,7 +1465,8 @@ export function renderer(renderer: () => any): Renderer {
 			const widgetMeta = widgetMetaMap.get(next.id);
 			if (widgetMeta) {
 				widgetMeta.properties = next.properties;
-				diffProperties(current.properties, next.properties, `${next.id}`, () => {
+				runProperties(current.properties, next.properties, next.id);
+				diffProperties(current.properties, next.properties, () => {
 					widgetMeta.dirty = true;
 				});
 				if (widgetMeta.dirty) {
@@ -1510,6 +1535,7 @@ export function renderer(renderer: () => any): Renderer {
 		_idToWrapperMap.delete(current.id);
 		const meta = widgetMetaMap.get(current.id);
 		if (meta) {
+			runDestroy(current.id);
 			meta.registryHandler.destroy();
 			meta.invalidator = undefined as any;
 			widgetMetaMap.delete(current.id);
@@ -1637,6 +1663,7 @@ export function renderer(renderer: () => any): Renderer {
 						} else {
 							const meta = widgetMetaMap.get(wrapper.id);
 							if (meta) {
+								runDestroy(wrapper.id);
 								meta.registryHandler.destroy();
 								widgetMetaMap.delete(wrapper.id);
 							}
