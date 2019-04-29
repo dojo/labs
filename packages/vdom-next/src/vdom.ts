@@ -430,7 +430,7 @@ function arrayFrom(arr: any) {
 	return Array.prototype.slice.call(arr);
 }
 
-function wrapNodes(renderer: () => DNode) {
+function wrapNodes(renderer: () => any) {
 	const result = renderer();
 	const isWNodeWrapper = isWNode(result);
 	const App = widget()(() => {
@@ -488,7 +488,7 @@ export function getNodeById(id: string, key: string | number) {
 	return foundNode;
 }
 
-export function renderer(renderer: () => WNode<any> | VNode): Renderer {
+export function renderer(renderer: () => any): Renderer {
 	let _mountOptions: MountOptions = {
 		sync: false,
 		merge: true,
