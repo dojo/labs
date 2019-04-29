@@ -1,7 +1,6 @@
 import { WIDGET_BASE_TYPE } from '@dojo/framework/widget-core/Registry';
 import {
 	WNode,
-	VNodeProperties,
 	DNode,
 	Constructor,
 	RegistryLabel,
@@ -12,7 +11,9 @@ import {
 	RenderResult,
 	WidgetProperties
 } from '@dojo/framework/widget-core/interfaces';
-import { v, isWNode, WNODE } from '@dojo/framework/widget-core/d';
+import { isWNode, WNODE } from '@dojo/framework/widget-core/d';
+export { tsx, FromRegistry } from '@dojo/framework/widget-core/tsx';
+export { v } from '@dojo/framework/widget-core/d';
 
 export interface MiddlewareMap<Middleware extends { api: any; properties: any; children: any }> {
 	[index: string]: Middleware;
@@ -79,38 +80,6 @@ export interface WidgetBaseTypes<P = WidgetProperties, C extends DNode = DNode> 
 	readonly children: (C | null)[];
 }
 
-declare global {
-	namespace JSX {
-		type Element = WNode;
-		interface ElementAttributesProperty {
-			properties: {};
-		}
-		interface IntrinsicElements {
-			[key: string]: VNodeProperties;
-		}
-	}
-}
-
-export const REGISTRY_ITEM = '__registry_item';
-
-export class FromRegistry<P> {
-	static type = REGISTRY_ITEM;
-	properties: P = {} as P;
-	name: string | undefined;
-}
-
-export function fromRegistry<P>(tag: string): Constructor<FromRegistry<P>> {
-	return class extends FromRegistry<P> {
-		properties: P = {} as P;
-		static type = REGISTRY_ITEM;
-		name = tag;
-	};
-}
-
-export function isWidgetBaseConstructor(item: any): item is Constructor<any> {
-	return Boolean(item && item._type === WIDGET_BASE_TYPE);
-}
-
 export function isWidget(item: any): item is Constructor<any> | WidgetCallback<any, any, any> {
 	return Boolean(item && item._type === WIDGET_BASE_TYPE) || item.isWidget === true;
 }
@@ -120,14 +89,6 @@ export function isWNodeFactory<W extends WidgetBaseTypes>(node: any): node is WN
 		return true;
 	}
 	return false;
-}
-
-function spreadChildren(children: any[], child: any): any[] {
-	if (Array.isArray(child)) {
-		return child.reduce(spreadChildren, children);
-	} else {
-		return [...children, child];
-	}
 }
 
 export function w<W extends WidgetBaseInterface>(
@@ -167,23 +128,6 @@ export function w<W extends WidgetBaseInterface>(
 		properties,
 		type: WNODE
 	};
-}
-
-export function tsx(tag: any, properties = {}, ...children: any[]): DNode {
-	children = children.reduce(spreadChildren, []);
-	properties = properties === null ? {} : properties;
-	if (typeof tag === 'string') {
-		return v(tag, properties, children);
-	} else if (tag.type === 'registry' && (properties as any).__autoRegistryItem) {
-		const name = (properties as any).__autoRegistryItem;
-		delete (properties as any).__autoRegistryItem;
-		return w(name, properties, children);
-	} else if (tag.type === REGISTRY_ITEM) {
-		const registryItem = new tag();
-		return w(registryItem.name, properties, children);
-	} else {
-		return w(tag, properties, children);
-	}
 }
 
 export function widget(): WidgetResult;
