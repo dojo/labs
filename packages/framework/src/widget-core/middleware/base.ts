@@ -27,6 +27,6 @@ export const destroy = createFactory(({ id }) => {
 
 export const registry = createFactory(({ id }) => {
 	return () => {
-		getRegistry(id);
+		return getRegistry(id);
 	}
 });
