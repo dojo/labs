@@ -5,7 +5,7 @@ import { createResolvers } from './../support/util';
 import { stub } from 'sinon';
 
 import { renderer, getRegistry, getInvalidator, destroy, properties, getNode } from '../../../src/widget-core/vdom';
-import { middleware, widget, v } from '../../../src/widget-core/tsx';
+import { middleware, widget, v, tsx } from '../../../src/widget-core/tsx';
 import Registry from '@dojo/framework/widget-core/Registry';
 
 const resolvers = createResolvers();
@@ -35,7 +35,7 @@ jsdomDescribe('vdom', () => {
 		});
 		const App = createWidget(({ middleware }) => {
 			widgetId = middleware.getId();
-			return show ? Foo({ foo: 'bar' }) : null;
+			return show ? <Foo foo="bar" /> : null;
 		});
 		const r = renderer(() => App({}));
 		const root = document.createElement('app');
