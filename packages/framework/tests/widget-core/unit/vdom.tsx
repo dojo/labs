@@ -10,10 +10,10 @@ import Registry from '@dojo/framework/widget-core/Registry';
 
 const resolvers = createResolvers();
 const createMiddleware = middleware();
-const getId = createMiddleware(({id}) => {
+const getId = createMiddleware(({ id }) => {
 	return () => id;
 });
-const createWidget = widget({getId});
+const createWidget = widget({ getId });
 
 jsdomDescribe('vdom', () => {
 	beforeEach(() => {
@@ -31,7 +31,7 @@ jsdomDescribe('vdom', () => {
 		const registry = new Registry();
 		const Foo = createWidget<any>(({ middleware, properties }) => {
 			fooWidgetId = middleware.getId();
-			return v('div', { key: 'foo' }, [ properties.foo ]);
+			return v('div', { key: 'foo' }, [properties.foo]);
 		});
 		const App = createWidget(({ middleware }) => {
 			widgetId = middleware.getId();
@@ -55,6 +55,5 @@ jsdomDescribe('vdom', () => {
 		invalidator!();
 		resolvers.resolve();
 		assert.strictEqual(1, destroyStub.callCount);
-
 	});
 });

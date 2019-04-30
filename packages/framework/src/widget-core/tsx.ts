@@ -23,9 +23,7 @@ export interface MiddlewareMap<Middleware extends { api: any; properties: any; c
 export type MiddlewareApiMap<U extends MiddlewareMap<any>> = { [P in keyof U]: U[P]['api'] };
 
 export interface MiddlewareCallback<Props, Middleware, ReturnValue> {
-	(
-		options: { id: string; middleware: MiddlewareApiMap<Middleware>; properties: Props }
-	): ReturnValue;
+	(options: { id: string; middleware: MiddlewareApiMap<Middleware>; properties: Props }): ReturnValue;
 }
 
 export interface MiddlewareResult<Props, Middleware, ReturnValue> {
