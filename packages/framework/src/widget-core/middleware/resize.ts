@@ -1,8 +1,8 @@
-import { middleware } from '../tsx';
+import { createMiddlewareFactory } from '../tsx';
 import ResizeObserver from '@dojo/framework/shim/ResizeObserver';
 import { dom, invalidator, destroy } from './base';
 
-const createFactory = middleware();
+const createFactory = createMiddlewareFactory();
 
 export const resize = createFactory({ dom, invalidator, destroy }, ({ middleware: { dom, invalidator, destroy } }) => {
 	const invalidate = invalidator();

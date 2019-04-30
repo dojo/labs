@@ -4,7 +4,7 @@ import { WeakMap } from '@dojo/framework/shim/WeakMap';
 import { Map } from '@dojo/framework/shim/Map';
 import { Set } from '@dojo/framework/shim/Set';
 import transitionStrategy from '@dojo/framework/widget-core/animations/cssTransitions';
-import { w, widget, isWidget } from './tsx';
+import { w, createWidget, isWidget } from './tsx';
 import { Registry, isWidgetBaseConstructor } from '@dojo/framework/widget-core/Registry';
 import { widgetInstanceMap } from '@dojo/framework/widget-core/WidgetBase';
 import { isDomVNode, isVNode, isWNode, v, WNODE, VNODE } from '@dojo/framework/widget-core/d';
@@ -442,7 +442,7 @@ function arrayFrom(arr: any) {
 function wrapNodes(renderer: () => any) {
 	const result = renderer();
 	const isWNodeWrapper = isWNode(result);
-	const App = widget()(() => {
+	const App = createWidget(() => {
 		return result;
 	});
 	(App as any).isWNodeWrapper = isWNodeWrapper;

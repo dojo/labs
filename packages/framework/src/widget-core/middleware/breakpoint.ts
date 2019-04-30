@@ -1,7 +1,7 @@
-import { middleware } from '../tsx';
+import { createMiddlewareFactory } from '../tsx';
 import { resize } from './resize';
 
-const createFactory = middleware();
+const createFactory = createMiddlewareFactory();
 
 const defaultBreakpoints: any = { SM: 0, MD: 576, LG: 768, XL: 960 };
 

@@ -1,4 +1,4 @@
-import { middleware } from '../tsx';
+import { createMiddlewareFactory } from '../tsx';
 import { dom, invalidator, destroy } from './base';
 
 export interface IntersectionResult {
@@ -26,7 +26,7 @@ const defaultIntersection: IntersectionResult = Object.freeze({
 	isIntersecting: false
 });
 
-const createFactory = middleware();
+const createFactory = createMiddlewareFactory();
 
 export const intersection = createFactory({ dom, invalidator, destroy }, ({ middleware }) => {
 	const _details = new Map<string, IntersectionDetail>();
