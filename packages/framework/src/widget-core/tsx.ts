@@ -42,22 +42,22 @@ export interface WidgetResultWithMiddleware<T, MiddlewareProps> {
 		callback: (
 			options: {
 				middleware: MiddlewareApiMap<T>;
-				properties: UnionToIntersection<Props & MiddlewareProps>;
+				properties: WidgetProperties & UnionToIntersection<Props & MiddlewareProps>;
 				children: DNode[];
 			}
 		) => RenderResult
-	): WNodeFactory<{ properties: UnionToIntersection<Props & MiddlewareProps>; children: Children }>;
+	): WNodeFactory<{ properties: WidgetProperties & UnionToIntersection<Props & MiddlewareProps>; children: Children }>;
 }
 
 export interface WidgetResult {
 	<Props, Children extends DNode[] = DNode[]>(
 		callback: (
 			options: {
-				properties: Props;
+				properties: WidgetProperties & Props;
 				children: DNode[];
 			}
 		) => RenderResult
-	): WNodeFactory<{ properties: Props; children: Children }>;
+	): WNodeFactory<{ properties: WidgetProperties & Props; children: Children }>;
 }
 
 export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends ((k: infer I) => void)
@@ -154,11 +154,11 @@ export function tsx(tag: any, properties = {}, ...children: any[]): DNode {
 	}
 }
 
-export function widget(): WidgetResult;
-export function widget<T extends MiddlewareMap<any>, MiddlewareProps = T[keyof T]['properties']>(
+export function createWidgetFactory(): WidgetResult;
+export function createWidgetFactory<T extends MiddlewareMap<any>, MiddlewareProps = T[keyof T]['properties']>(
 	middlewares: T
 ): WidgetResultWithMiddleware<T, MiddlewareProps>;
-export function widget<T extends MiddlewareMap<any>, MiddlewareProps = T[keyof T]['properties']>(
+export function createWidgetFactory<T extends MiddlewareMap<any>, MiddlewareProps = T[keyof T]['properties']>(
 	middlewares?: any
 ): any {
 	return function<Props, Children extends DNode[] = DNode[]>(
@@ -178,7 +178,7 @@ export function widget<T extends MiddlewareMap<any>, MiddlewareProps = T[keyof T
 	};
 }
 
-export function middleware<Props>() {
+export function createMiddlewareFactory<Props>() {
 	function createMiddleware<ReturnValue>(
 		callback: MiddlewareCallback<Props, {}, ReturnValue>
 	): MiddlewareResult<Props, {}, ReturnValue>;
@@ -213,3 +213,5 @@ export function middleware<Props>() {
 
 	return createMiddleware;
 }
+
+export const createWidget = createWidgetFactory();
