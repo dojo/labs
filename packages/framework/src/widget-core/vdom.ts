@@ -492,7 +492,7 @@ export function destroy(id: string, func: () => void): void {
 	destroyMap.set(widgetId, handles);
 }
 
-export function properties(id: string, func: (props: { next: any, current: any }) => void): void {
+export function properties(id: string, func: (props: { next: any; current: any }) => void): void {
 	const [widgetId] = id.split('-');
 	const diffs = customDiffMap.get(widgetId) || [];
 	diffs.push(func);
@@ -568,7 +568,7 @@ export function renderer(renderer: () => any): Renderer {
 		let callback = currentValue;
 
 		if (eventName === 'input') {
-			callback = function (this: any, evt: Event) {
+			callback = function(this: any, evt: Event) {
 				currentValue.call(this, evt);
 				(evt.target as any)['oninput-value'] = (evt.target as HTMLInputElement).value;
 			};
