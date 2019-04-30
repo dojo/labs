@@ -1,8 +1,8 @@
-import { middleware } from '../tsx';
+import { createMiddlewareFactory } from '../tsx';
 import Map from '@dojo/framework/shim/Map';
 import { destroy } from './base';
 
-const createFactory = middleware();
+const createFactory = createMiddlewareFactory();
 
 export const cache = createFactory({ destroy }, ({ middleware }) => {
 	const cacheMap = new Map<string, any>();

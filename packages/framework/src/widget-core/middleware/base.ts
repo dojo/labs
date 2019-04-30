@@ -1,7 +1,7 @@
-import { middleware } from '../tsx';
+import { createMiddlewareFactory } from '../tsx';
 import { getNode, getInvalidator, properties as vdomProperties, destroy as vdomDestroy, getRegistry } from '../vdom';
 
-const createFactory = middleware();
+const createFactory = createMiddlewareFactory();
 
 export const dom = createFactory(({ id }) => {
 	return (key: string | number): HTMLElement | null => {
