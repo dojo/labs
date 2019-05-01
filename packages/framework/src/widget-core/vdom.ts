@@ -5,7 +5,7 @@ import { Map } from '@dojo/framework/shim/Map';
 import { Set } from '@dojo/framework/shim/Set';
 import transitionStrategy from '@dojo/framework/widget-core/animations/cssTransitions';
 import { w, createWidget, isWidget } from './tsx';
-import { Registry, isWidgetBaseConstructor } from '@dojo/framework/widget-core/Registry';
+import { Registry } from '@dojo/framework/widget-core/Registry';
 import { widgetInstanceMap } from '@dojo/framework/widget-core/WidgetBase';
 import { isDomVNode, isVNode, isWNode, v, WNODE, VNODE } from '@dojo/framework/widget-core/d';
 import { RegistryHandler } from '@dojo/framework/widget-core/RegistryHandler';
@@ -56,6 +56,7 @@ export interface WidgetMeta {
 }
 
 export interface VNodeWrapper extends BaseNodeWrapper {
+	owningId: string;
 	node: VNode | DomVNode;
 	merged?: boolean;
 	inserted?: boolean;
@@ -459,12 +460,11 @@ let wrapperId = 0;
 export function getNode(id: string, key: string | number): HTMLElement | null {
 	const [widgetId] = id.split('-');
 	const nodeMap = domNodeCacheMap.get(widgetId);
-	if (!nodeMap) {
+	if (!nodeMap || !nodeMap.has(key)) {
 		registeredNodes.add(`${widgetId}-${key}`);
 		return null;
 	}
-	const foundNode = nodeMap.get(key) || null;
-	return foundNode;
+	return nodeMap.get(key) || null;
 }
 
 export function getRegistry(id: string): RegistryHandler | null {
@@ -675,6 +675,7 @@ export function renderer(renderer: () => any): Renderer {
 			if (typeof renderedItem === 'string') {
 				renderedItem = toTextVNode(renderedItem);
 			}
+			const owningNode = _nodeToInstanceMap.get(renderedItem);
 			const wrapper: DNodeWrapper = {
 				node: renderedItem,
 				depth: depth + 1,
@@ -698,6 +699,9 @@ export function renderer(renderer: () => any): Renderer {
 						nextParent = _parentWrapperMap.get(nextParent);
 					}
 				}
+			}
+			if (owningNode && isVNodeWrapper(wrapper)) {
+				wrapper.owningId = owningNode.id;
 			}
 			if (isWNode(renderedItem)) {
 				resolveRegistryItem(wrapper as WNodeWrapper, (parent as any).instance, (parent as any).id);
@@ -963,6 +967,7 @@ export function renderer(renderer: () => any): Renderer {
 			id: `${wrapperId++}`,
 			depth: 0,
 			order: 0,
+			owningId: '',
 			domNode,
 			node: v('fake')
 		});
@@ -1332,7 +1337,7 @@ export function renderer(renderer: () => any): Renderer {
 			node: { widgetConstructor }
 		} = next;
 		let { registry } = _mountOptions;
-		let Constructor = next.registryItem || widgetConstructor;
+		let Constructor: any = next.registryItem || widgetConstructor;
 		if (!isWidget(Constructor)) {
 			resolveRegistryItem(next);
 			if (!next.registryItem) {
@@ -1346,7 +1351,16 @@ export function renderer(renderer: () => any): Renderer {
 		let invalidate: () => void;
 		next.properties = next.node.properties;
 		next.id = `${wrapperId++}`;
-		if (!isWidgetBaseConstructor(Constructor)) {
+		if (Constructor.isWidget || Constructor.isFactory) {
+			if (Constructor.isFactory) {
+				const owningWrapper = _nodeToInstanceMap.get(next.node);
+				next.node = Constructor(next.node.properties, next.node.children);
+				owningWrapper && _nodeToInstanceMap.set(next.node, owningWrapper);
+				if (next.registryItem === Constructor) {
+					next.registryItem = next.node.widgetConstructor as any;
+				}
+				Constructor = next.node.widgetConstructor;
+			}
 			invalidate = () => {
 				const widgetMeta = widgetMetaMap.get(next.id);
 				if (widgetMeta) {
@@ -1446,7 +1460,7 @@ export function renderer(renderer: () => any): Renderer {
 		let {
 			node: { widgetConstructor }
 		} = next;
-		const Constructor = next.registryItem || widgetConstructor;
+		const Constructor: any = next.registryItem || widgetConstructor;
 
 		if (!isWidget(Constructor)) {
 			return {};
@@ -1459,7 +1473,7 @@ export function renderer(renderer: () => any): Renderer {
 			next.domNode = domNode;
 		}
 
-		if (!isWidgetBaseConstructor(Constructor)) {
+		if ((Constructor as any).isWidget || (Constructor as any).isFactory) {
 			const widgetMeta = widgetMetaMap.get(next.id);
 			if (widgetMeta) {
 				widgetMeta.properties = next.properties;
@@ -1639,6 +1653,10 @@ export function renderer(renderer: () => any): Renderer {
 	function _removeDom({ current }: RemoveDomInstruction): ProcessResult {
 		_wrapperSiblingMap.delete(current);
 		_parentWrapperMap.delete(current);
+		const nodeMap = domNodeCacheMap.get(current.owningId);
+		if (nodeMap && current.node.properties.key) {
+			nodeMap.delete(current.node.properties.key);
+		}
 		if (current.hasAnimations) {
 			return {
 				item: { current: current.childrenWrappers, meta: {} },
@@ -1665,6 +1683,11 @@ export function renderer(renderer: () => any): Renderer {
 								meta.registryHandler.destroy();
 								widgetMetaMap.delete(wrapper.id);
 							}
+						}
+					} else {
+						const nodeMap = domNodeCacheMap.get(wrapper.owningId);
+						if (nodeMap && wrapper.node.properties.key) {
+							nodeMap.delete(wrapper.node.properties.key);
 						}
 					}
 					if (wrapper.childrenWrappers) {
