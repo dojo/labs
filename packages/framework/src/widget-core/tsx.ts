@@ -83,7 +83,7 @@ export interface WidgetBaseTypes<P = WidgetProperties, C extends DNode = DNode> 
 }
 
 export function isWidget(item: any): item is Constructor<any> | WidgetCallback<any, any, any> {
-	return Boolean(item && item._type === WIDGET_BASE_TYPE) || item.isWidget === true;
+	return Boolean(item && item._type === WIDGET_BASE_TYPE) || Boolean(item && item.isWidget === true);
 }
 
 export function isWNodeFactory<W extends WidgetBaseTypes>(node: any): node is WNodeFactory<W> {
@@ -171,9 +171,11 @@ export function createWidgetFactory<T extends MiddlewareMap<any>, MiddlewareProp
 			const result = w(callback as any, properties, children);
 			(callback as any).isWidget = true;
 			(callback as any).middlewares = middlewares;
+			(callback as any)._type = '__widget_base_type';
 			return result;
 		};
 		(factory as any).isFactory = true;
+		(factory as any)._type = '__widget_base_type';
 		return factory as WNodeFactory<{
 			properties: UnionToIntersection<Props & MiddlewareProps>;
 			children: Children;

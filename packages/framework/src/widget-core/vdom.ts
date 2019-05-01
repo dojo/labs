@@ -1337,7 +1337,7 @@ export function renderer(renderer: () => any): Renderer {
 			node: { widgetConstructor }
 		} = next;
 		let { registry } = _mountOptions;
-		let Constructor = next.registryItem || widgetConstructor;
+		let Constructor: any = next.registryItem || widgetConstructor;
 		if (!isWidget(Constructor)) {
 			resolveRegistryItem(next);
 			if (!next.registryItem) {
@@ -1351,7 +1351,16 @@ export function renderer(renderer: () => any): Renderer {
 		let invalidate: () => void;
 		next.properties = next.node.properties;
 		next.id = `${wrapperId++}`;
-		if (!isWidgetBaseConstructor(Constructor)) {
+		if (Constructor.isWidget || Constructor.isFactory) {
+			if (Constructor.isFactory) {
+				const owningWrapper = _nodeToInstanceMap.get(next.node);
+				next.node = Constructor(next.node.properties, next.node.children);
+				owningWrapper && _nodeToInstanceMap.set(next.node, owningWrapper);
+				if (next.registryItem === Constructor) {
+					next.registryItem = next.node.widgetConstructor as any;
+				}
+				Constructor = next.node.widgetConstructor;
+			}
 			invalidate = () => {
 				const widgetMeta = widgetMetaMap.get(next.id);
 				if (widgetMeta) {
