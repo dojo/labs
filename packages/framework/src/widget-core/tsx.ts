@@ -46,7 +46,10 @@ export interface WidgetResultWithMiddleware<T, MiddlewareProps> {
 				children: DNode[];
 			}
 		) => RenderResult
-	): WNodeFactory<{ properties: WidgetProperties & UnionToIntersection<Props & MiddlewareProps>; children: Children }>;
+	): WNodeFactory<{
+		properties: WidgetProperties & UnionToIntersection<Props & MiddlewareProps>;
+		children: Children;
+	}>;
 }
 
 export interface WidgetResult {
