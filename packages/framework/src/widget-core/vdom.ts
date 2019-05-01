@@ -5,7 +5,7 @@ import { Map } from '@dojo/framework/shim/Map';
 import { Set } from '@dojo/framework/shim/Set';
 import transitionStrategy from '@dojo/framework/widget-core/animations/cssTransitions';
 import { w, createWidget, isWidget } from './tsx';
-import { Registry, isWidgetBaseConstructor } from '@dojo/framework/widget-core/Registry';
+import { Registry } from '@dojo/framework/widget-core/Registry';
 import { widgetInstanceMap } from '@dojo/framework/widget-core/WidgetBase';
 import { isDomVNode, isVNode, isWNode, v, WNODE, VNODE } from '@dojo/framework/widget-core/d';
 import { RegistryHandler } from '@dojo/framework/widget-core/RegistryHandler';
@@ -1460,7 +1460,7 @@ export function renderer(renderer: () => any): Renderer {
 		let {
 			node: { widgetConstructor }
 		} = next;
-		const Constructor = next.registryItem || widgetConstructor;
+		const Constructor: any = next.registryItem || widgetConstructor;
 
 		if (!isWidget(Constructor)) {
 			return {};
@@ -1473,7 +1473,7 @@ export function renderer(renderer: () => any): Renderer {
 			next.domNode = domNode;
 		}
 
-		if (!isWidgetBaseConstructor(Constructor)) {
+		if ((Constructor as any).isWidget || (Constructor as any).isFactory) {
 			const widgetMeta = widgetMetaMap.get(next.id);
 			if (widgetMeta) {
 				widgetMeta.properties = next.properties;
